@@ -1,6 +1,6 @@
 # Implementation Status
 
-> State: `github_pages_ready_waiting_for_release_approval`
+> State: `github_pages_public_beta_live`
 > Date: 2026-07-15
 
 ## Completed
@@ -34,17 +34,18 @@
 - Generated HTML audit: 22 content pages and 18 redirects pass links, redirect targets, H1, images, robots, and leakage checks.
 - Playwright: 5 tests pass for empty Home, direct Blog entry, desktop/mobile navigation, system dark mode, Mermaid, and Pagefind.
 - GitHub Pages public-beta build and all 5 Playwright tests pass under `/Blog/`.
+- GitHub Actions build and deploy jobs pass for commit `8638e11`.
+- Online smoke passes for Home, Blog, topic entry, images, Pagefind, mobile navigation, and zero failed network responses.
 - Screenshots: `artifacts/qa/`.
 
 ## Required User Gate
 
-The user created `git@github.com:chengjt23/Blog.git`; SSH access is available and the remote is empty. The
-local `main` repository is initialized and bound to `origin`. No commit, push, Pages deployment, custom
-domain, or indexing action has been performed.
+The public beta is live at `https://chengjt23.github.io/Blog/`. The repository is public, `main` deploys
+through GitHub Actions, and indexing remains disabled. No custom domain or production indexing action has
+been performed.
 
-Before those actions, the user must complete the public-release fields in `DECISIONS.md` and approve the
-local preview. The implementation will then replace preview identity metadata, finalize License/Privacy,
-set publication dates and draft flags, and run the production gate.
+The remaining release gate is the user's online public-beta approval. Production indexing, sitemap
+submission, and any custom domain change require a separate explicit decision.
 
 ## Deferred P1/P2
 
