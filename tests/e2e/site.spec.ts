@@ -1,0 +1,97 @@
+import { expect, test } from '@playwright/test';
+
+const configuredBase = process.env.PUBLIC_BASE_PATH ?? '';
+const basePath = configuredBase === '/' ? '' : `/${configuredBase.replace(/^\/+|\/+$/g, '')}`;
+const pagePath = (pathname: string) => `${basePath}${pathname}`;
+
+test('desktop Home is empty and Blog titles open directly', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(pagePath('/'));
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Home');
+  await expect(page.locator('.empty-home')).toBeVisible();
+  await expect(page.locator('.site-mark')).toHaveText('R');
+  await expect(page.locator('.site-mark-label')).toHaveCount(0);
+  await expect(page.locator('.main-nav a')).toHaveCount(2);
+  await expect(page.locator('.main-nav')).toContainText('Home');
+  await expect(page.locator('.main-nav')).toContainText('Blog');
+  await expect(page.locator('#theme-toggle')).toHaveCount(0);
+  await expect(page.locator('.site-header a[href="/search/"]')).toHaveCount(0);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex,nofollow');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+  await page.screenshot({ path: 'artifacts/qa/home-desktop.png', fullPage: true });
+
+  await page.getByRole('link', { name: 'Blog' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Blog');
+  const blogTitle = page.getByRole('link', { name: 'Schrödinger Bridge', exact: true });
+  await expect(blogTitle).toHaveAttribute('href', pagePath('/blog/schrodinger-bridge/'));
+  await page.screenshot({ path: 'artifacts/qa/blog-desktop.png', fullPage: true });
+  await blogTitle.click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Schrödinger Bridge');
+  await expect(page.locator('.chapter-row')).toHaveCount(15);
+});
+
+test('chapter navigation, code tools, and dark theme work', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto(pagePath('/blog/schrodinger-bridge/b5-schrodinger-bridge-entropic-ot/'));
+  await expect(page.locator('.series-rail')).toBeVisible();
+  await expect(page.locator('.toc-rail')).toBeVisible();
+  expect(await page.locator('.katex-display').count()).toBeGreaterThanOrEqual(2);
+  await expect(page.locator('.article-content pre').first()).toBeVisible();
+  await expect(page.locator('.copy-code').first()).toHaveAttribute('aria-label', '复制代码');
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const codeColor = await page
+    .locator('.astro-code span')
+    .first()
+    .evaluate((node) => getComputedStyle(node).color);
+  expect(codeColor).not.toBe('rgb(36, 41, 46)');
+  await page.screenshot({ path: 'artifacts/qa/chapter-dark-viewport.png' });
+  await page.screenshot({ path: 'artifacts/qa/chapter-dark-desktop.png', fullPage: true });
+
+  const next = page.getByRole('link', { name: /下一篇/ });
+  await expect(next).toHaveAttribute('href', /b6-stochastic-control/);
+});
+
+test('mobile navigation and article layout do not overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(pagePath('/blog/schrodinger-bridge/b13-applications-and-evidence/'));
+  await expect(page.locator('.mobile-series-nav')).toBeVisible();
+  await expect(page.locator('.series-rail')).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  await page.getByRole('button', { name: '打开导航' }).click();
+  await expect(page.locator('#main-nav')).toHaveAttribute('data-open', 'true');
+  const headerBox = await page.locator('.site-header').boundingBox();
+  const titleBox = await page.getByRole('heading', { level: 1 }).boundingBox();
+  expect(titleBox?.y ?? 0).toBeGreaterThanOrEqual((headerBox?.height ?? 0) - 1);
+  await page.screenshot({ path: 'artifacts/qa/chapter-mobile-viewport.png' });
+  await page.screenshot({ path: 'artifacts/qa/chapter-mobile.png', fullPage: true });
+});
+
+test('Mermaid diagrams render and retain fallback content', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(pagePath('/blog/schrodinger-bridge/b11-discrete-multimarginal-meanfield/'));
+  const shell = page.locator('[data-mermaid-shell]').first();
+  await expect(shell).toBeVisible();
+  await expect(shell.locator('svg')).toBeVisible({ timeout: 15_000 });
+  expect(
+    await shell.locator('svg').evaluate((svg) => svg.getBoundingClientRect().width),
+  ).toBeGreaterThan(200);
+});
+
+test('Pagefind returns Chinese and English technical results', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await page.goto(pagePath('/search/'));
+  const input = page.getByRole('searchbox', { name: '关键词' });
+  await input.fill('Markovian projection');
+  const firstResult = page.locator('#search-results li').first();
+  await expect(firstResult).toBeVisible({ timeout: 10_000 });
+  if (basePath) {
+    await expect(firstResult.locator('a')).toHaveAttribute('href', new RegExp(`^${basePath}/`));
+  }
+  await expect(page.locator('#search-status')).toContainText('找到');
+
+  await input.fill('随机控制');
+  await expect(page.locator('#search-results li').first()).toBeVisible({ timeout: 10_000 });
+});

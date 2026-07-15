@@ -1,0 +1,67 @@
+---
+import { Menu } from '@lucide/astro';
+import { withBasePath, withoutBasePath } from '../lib/paths';
+import { siteConfig } from '../lib/site-config';
+
+interface Props {
+  pathname: string;
+}
+
+const { pathname } = Astro.props;
+const currentPath = withoutBasePath(pathname);
+const nav = [
+  { path: '/', href: withBasePath('/'), label: 'Home' },
+  { path: '/blog/', href: withBasePath('/blog/'), label: 'Blog' },
+];
+---
+
+<header class="site-header" data-pagefind-ignore>
+  <div class="header-inner">
+    <a class="site-mark" href={withBasePath('/')} aria-label={`${siteConfig.name}首页`}>
+      <span class="site-mark-symbol" aria-hidden="true">R</span>
+    </a>
+
+    <nav class="main-nav" id="main-nav" aria-label="主导航">
+      {
+        nav.map((item) => (
+          <a
+            href={item.href}
+            aria-current={
+              currentPath === item.path ||
+              (item.path === '/blog/' && currentPath.startsWith('/blog/'))
+                ? 'page'
+                : undefined
+            }
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="header-actions">
+      <button
+        class="icon-button menu-button"
+        id="menu-toggle"
+        type="button"
+        aria-label="打开导航"
+        aria-controls="main-nav"
+        aria-expanded="false"
+        title="导航"
+      >
+        <Menu aria-hidden="true" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const menuButton = document.querySelector<HTMLButtonElement>('#menu-toggle');
+  const nav = document.querySelector<HTMLElement>('#main-nav');
+  menuButton?.addEventListener('click', () => {
+    const isOpen = nav?.dataset.open === 'true';
+    if (nav) nav.dataset.open = String(!isOpen);
+    menuButton.setAttribute('aria-expanded', String(!isOpen));
+    menuButton.setAttribute('aria-label', isOpen ? '打开导航' : '关闭导航');
+  });
+</script>

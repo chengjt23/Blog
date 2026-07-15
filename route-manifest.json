@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "series": "schrodinger-bridge",
+  "release": {
+    "publishedAt": null,
+    "updatedAt": "2026-07-15",
+    "draft": true,
+    "license": "all-rights-reserved",
+    "authors": ["preview-author"]
+  },
+  "chapters": [
+    {
+      "order": 0,
+      "source": "bridge/B0_schrodinger_problem_timeline.md",
+      "slug": "b0-schrodinger-problem-timeline",
+      "title": "Schrödinger 的问题与全局时间线",
+      "description": "从 1931 年的稀有涨落问题出发，用有限粒子模型解释 Schrödinger 问题的统计动机与理论时间线。",
+      "scope": "覆盖原始问题、有限迁移模型、prepared-initial 大偏差解释及全系列阅读地图。",
+      "tags": ["schrodinger-bridge", "history", "large-deviations"],
+      "featured": true,
+      "mermaid": false
+    },
+    {
+      "order": 1,
+      "source": "bridge/B1_brownian_to_diffusion_bridges.md",
+      "slug": "b1-brownian-to-diffusion-bridges",
+      "title": "从 Brownian Bridge 到一般条件扩散",
+      "description": "区分点终点条件化与双边缘优化，从 Brownian bridge 推进到 Doob 变换和一般扩散桥。",
+      "scope": "聚焦 point-conditioned bridge、Doob 变换与一般扩散条件化，不讨论双边缘熵优化。",
+      "tags": ["schrodinger-bridge", "brownian-motion", "doob-transform"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 2,
+      "source": "bridge/B2_path_space_schrodinger_problem.md",
+      "slug": "b2-path-space-schrodinger-problem",
+      "title": "路径空间上的 Schrödinger Problem",
+      "description": "在路径测度上定义动态 Schrödinger 问题，并用相对熵分解说明端点耦合与条件桥的职责。",
+      "scope": "覆盖 path-law 优化、KL disintegration、可行性和动态到静态的约化。",
+      "tags": ["schrodinger-bridge", "path-space", "relative-entropy"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 3,
+      "source": "bridge/B3_static_schrodinger_system.md",
+      "slug": "b3-static-schrodinger-system",
+      "title": "静态 Schrödinger Problem 与 Schrödinger System",
+      "description": "把路径空间问题约化为端点耦合，并推导 Schrödinger system、势函数与有限矩阵缩放结构。",
+      "scope": "聚焦静态熵投影、正核条件、因子分解、存在唯一性边界与 finite matrix 示例。",
+      "tags": ["schrodinger-bridge", "schrodinger-system", "matrix-scaling"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 4,
+      "source": "bridge/B4_markov_reciprocal_two_sided_dynamics.md",
+      "slug": "b4-markov-reciprocal-dynamics",
+      "title": "Markov、Reciprocal 与前后向势函数",
+      "description": "澄清 Markov、reciprocal 与 reference bridge mixture 的差别，并建立前后向势函数和双向动力学。",
+      "scope": "区分三类路径结构，讨论 endpoint factorization、时变势和前后向 drift。",
+      "tags": ["schrodinger-bridge", "reciprocal-process", "markov-process"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 5,
+      "source": "bridge/B5_schrodinger_bridge_entropic_ot.md",
+      "slug": "b5-schrodinger-bridge-entropic-ot",
+      "title": "Schrödinger Bridge 与 Entropic Optimal Transport",
+      "description": "系统比较 Schrödinger Bridge 与熵正则最优传输，分开有限噪声恒等式、动态作用量和零噪声极限。",
+      "scope": "覆盖静态 Gibbs kernel、动态粘性作用量、Sinkhorn divergence 与 OT 极限的适用条件。",
+      "tags": ["schrodinger-bridge", "optimal-transport", "entropic-ot"],
+      "featured": true,
+      "mermaid": false
+    },
+    {
+      "order": 6,
+      "source": "bridge/B6_stochastic_control_girsanov_follmer.md",
+      "slug": "b6-stochastic-control-girsanov-follmer",
+      "title": "随机最优控制、Girsanov 与 Föllmer Drift",
+      "description": "从路径相对熵到二次控制能量，梳理 Girsanov、Föllmer drift、HJB 与线性高斯 steering 的边界。",
+      "scope": "覆盖 Wiener 与非退化扩散下的控制表示、可达性条件和 same-channel 验证。",
+      "tags": ["schrodinger-bridge", "stochastic-control", "girsanov"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 7,
+      "source": "bridge/B7_classic_computation_fortet_ipf_sinkhorn.md",
+      "slug": "b7-fortet-ipf-sinkhorn",
+      "title": "经典计算：Fortet、IPF 与 Sinkhorn",
+      "description": "从 Fortet 迭代到 IPF 与 Sinkhorn，解释有限状态精确投影、结构零、可行性和数值稳定化。",
+      "scope": "聚焦 finite exact IPF/Sinkhorn、support 条件、log-domain 实现与停止准则。",
+      "tags": ["schrodinger-bridge", "sinkhorn", "ipf"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 8,
+      "source": "bridge/B8_high_dimensional_neural_schrodinger_bridge.md",
+      "slug": "b8-neural-schrodinger-bridge",
+      "title": "高维神经 Schrödinger Bridge：从 DSB 到 FBSDE",
+      "description": "从经典交替投影进入高维神经方法，比较 DSB、FBSDE 参数化、采样回归与有限网络误差。",
+      "scope": "覆盖神经交替拟合的 population target、轨迹采样接口与实现层级误差，不宣称有限训练精确收敛。",
+      "tags": ["schrodinger-bridge", "deep-learning", "fbsde"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 9,
+      "source": "bridge/B9_bridge_matching_markovian_projection_imf.md",
+      "slug": "b9-bridge-matching-markovian-projection-imf",
+      "title": "Bridge Matching、Markovian Projection 与 IMF",
+      "description": "拆解 bridge matching、Markovian projection 与 iterative Markovian fitting，明确边缘匹配和路径律投影的差别。",
+      "scope": "聚焦 population conditional expectation、mimicking marginals、reciprocal/Markov 投影与 IMF 迭代。",
+      "tags": ["schrodinger-bridge", "bridge-matching", "markovian-projection"],
+      "featured": true,
+      "mermaid": false
+    },
+    {
+      "order": 10,
+      "source": "bridge/B10_simulation_free_generalized_matching_ipmf.md",
+      "slug": "b10-simulation-free-generalized-matching",
+      "title": "Simulation-Free、Generalized Matching 与 IPMF",
+      "description": "比较 simulation-free matching、广义桥匹配和 IPMF，追踪每种方法替换了哪一个投影或采样算子。",
+      "scope": "覆盖 SF2M、generalized matching、adversarial/light 方法与 IPMF 的 operator-level 关系。",
+      "tags": ["schrodinger-bridge", "simulation-free", "ipmf"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 11,
+      "source": "bridge/B11_extensions_discrete_multimarginal_meanfield.md",
+      "slug": "b11-discrete-multimarginal-meanfield",
+      "title": "扩展：离散、多边缘、Mean-Field 与一般参考过程",
+      "description": "按被替换的假设组织离散、多边缘、非平衡、mean-field、反射边界与一般参考过程扩展。",
+      "scope": "各扩展族采用 bounded representative scope，强调对象、约束、参考过程和保证不可混用。",
+      "tags": ["schrodinger-bridge", "multimarginal", "mean-field"],
+      "featured": false,
+      "mermaid": true
+    },
+    {
+      "order": 12,
+      "source": "bridge/B12_diffusion_flow_matching_unification.md",
+      "slug": "b12-diffusion-flow-matching-unification",
+      "title": "Schrödinger Bridge、Diffusion 与 Flow Matching 的关系",
+      "description": "以 coupling、path law、marginal path 和回归场四层接口比较 Diffusion、Flow Matching 与 Schrödinger Bridge。",
+      "scope": "给出可共享的条件期望与场表示，同时保留 reference、coupling、目标函数和路径律的差异。",
+      "tags": ["schrodinger-bridge", "diffusion", "flow-matching"],
+      "featured": false,
+      "mermaid": false
+    },
+    {
+      "order": 13,
+      "source": "bridge/B13_applications_when_schrodinger_bridge_is_needed.md",
+      "slug": "b13-applications-and-evidence",
+      "title": "应用：何时真正需要 Schrödinger Bridge",
+      "description": "用证据矩阵审视图像转换、单细胞、稀有事件等应用，判断收益是否真的来自双端路径约束。",
+      "scope": "覆盖代表性应用及其可识别证据，区分 bridge 结构、额外监督、已知动力学和模型规模的贡献。",
+      "tags": ["schrodinger-bridge", "applications", "rare-events"],
+      "featured": true,
+      "mermaid": true
+    },
+    {
+      "order": 14,
+      "source": "bridge/B14_theory_frontiers_open_problems_reading_routes.md",
+      "slug": "b14-frontiers-open-problems-reading-routes",
+      "title": "理论前沿、开放问题与阅读路线",
+      "description": "汇总全系列的保证层级、尚未闭合的理论问题和按背景划分的阅读路线，避免把 population 结果误读为训练保证。",
+      "scope": "覆盖 B0--B13 的保证地图、IMF/IPMF 前沿、开放问题和四条带注释阅读路线。",
+      "tags": ["schrodinger-bridge", "theory", "reading-guide"],
+      "featured": false,
+      "mermaid": false
+    }
+  ]
+}

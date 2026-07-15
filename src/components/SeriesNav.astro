@@ -1,0 +1,26 @@
+---
+import type { ChapterEntry } from '../lib/content';
+import { chapterUrl } from '../lib/content';
+
+interface Props {
+  chapters: ChapterEntry[];
+  currentSlug: string;
+}
+
+const { chapters, currentSlug } = Astro.props;
+---
+
+<ul class="series-nav-list">
+  {
+    chapters.map((chapter) => (
+      <li>
+        <a
+          href={chapterUrl(chapter)}
+          aria-current={chapter.data.slug === currentSlug ? 'page' : undefined}
+        >
+          B{chapter.data.order} · {chapter.data.title}
+        </a>
+      </li>
+    ))
+  }
+</ul>

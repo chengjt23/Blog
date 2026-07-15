@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { withBasePath } from '../../lib/paths';
+---
+
+<BaseLayout title="Blog" description="生成建模、随机过程与最优传输的系统技术 Blog。">
+  <div class="page-shell">
+    <header>
+      <p class="eyebrow">Blog</p>
+      <h1 class="page-title">Blog</h1>
+      <p class="page-lead">按主题和依赖关系组织的长篇技术内容。</p>
+    </header>
+
+    <article class="section-band series-feature">
+      <div>
+        <p class="eyebrow">15 chapters · preview v0.1</p>
+        <h2>
+          <a class="blog-title-link" href={withBasePath('/blog/schrodinger-bridge/')}>
+            Schrödinger Bridge
+          </a>
+        </h2>
+        <p>
+          连接概率、相对熵、最优传输、随机控制与现代生成建模。提供完整顺序和按主题跳读两种路径。
+        </p>
+      </div>
+      <a
+        class="blog-figure-link"
+        href={withBasePath('/blog/schrodinger-bridge/')}
+        aria-label="进入 Schrödinger Bridge Blog"
+      >
+        <figure>
+          <img
+            src={withBasePath('/images/bridge/B5_entropic_couplings.png')}
+            width="1887"
+            height="647"
+            alt="不同熵温度下的最优端点耦合"
+          />
+          <figcaption>不同 entropy temperature 下的端点耦合。</figcaption>
+        </figure>
+      </a>
+    </article>
+  </div>
+</BaseLayout>

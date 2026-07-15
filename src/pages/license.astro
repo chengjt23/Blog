@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../lib/site-config';
+---
+
+<BaseLayout title="内容许可" description="本站正文、原创图片、代码和第三方引用的许可边界。">
+  <div class="page-shell">
+    <header>
+      <p class="eyebrow">License</p>
+      <h1 class="page-title">内容与代码许可</h1>
+      <p class="page-lead">
+        当前 preview 采用保守默认值：未获得单独书面许可时，正文、原创图片与站点代码均保留所有权利。
+      </p>
+    </header>
+
+    <section class="section-band">
+      <h2 class="section-heading">当前边界</h2>
+      <ul>
+        <li>
+          教程正文与原创图：{
+            siteConfig.license === 'all-rights-reserved'
+              ? 'All rights reserved'
+              : siteConfig.license
+          }。
+        </li>
+        <li>站点代码：用户尚未确认开源许可证。</li>
+        <li>论文、书籍与第三方代码：版权归原权利人；本站仅提供必要引用和官方链接。</li>
+        <li>本地论文 PDF、第三方代码镜像和内部研究记录不随站点发布。</li>
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

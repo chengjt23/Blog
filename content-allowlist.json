@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "sources": [
+    "bridge/B0_schrodinger_problem_timeline.md",
+    "bridge/B1_brownian_to_diffusion_bridges.md",
+    "bridge/B2_path_space_schrodinger_problem.md",
+    "bridge/B3_static_schrodinger_system.md",
+    "bridge/B4_markov_reciprocal_two_sided_dynamics.md",
+    "bridge/B5_schrodinger_bridge_entropic_ot.md",
+    "bridge/B6_stochastic_control_girsanov_follmer.md",
+    "bridge/B7_classic_computation_fortet_ipf_sinkhorn.md",
+    "bridge/B8_high_dimensional_neural_schrodinger_bridge.md",
+    "bridge/B9_bridge_matching_markovian_projection_imf.md",
+    "bridge/B10_simulation_free_generalized_matching_ipmf.md",
+    "bridge/B11_extensions_discrete_multimarginal_meanfield.md",
+    "bridge/B12_diffusion_flow_matching_unification.md",
+    "bridge/B13_applications_when_schrodinger_bridge_is_needed.md",
+    "bridge/B14_theory_frontiers_open_problems_reading_routes.md"
+  ],
+  "assets": [
+    "bridge/figures/B0_migration_likelihood.png",
+    "bridge/figures/B1_brownian_bridge.png",
+    "bridge/figures/B2_path_kl_projection.png",
+    "bridge/figures/B3_schrodinger_system.png",
+    "bridge/figures/B4_reciprocal_markov.png",
+    "bridge/figures/B5_entropic_couplings.png",
+    "bridge/figures/B7_sinkhorn_diagnostics.png",
+    "bridge/figures/B8_population_regression.png",
+    "bridge/figures/B9_markovian_projection.png",
+    "bridge/figures/B10_sf2m_population_identity.png",
+    "bridge/figures/B12_same_marginals_paths.png",
+    "bridge/figures/B13_rare_event_doob.png"
+  ],
+  "publicDerivations": [],
+  "publicCode": []
+}

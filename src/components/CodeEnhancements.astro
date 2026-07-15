@@ -1,0 +1,29 @@
+<script>
+  import { Check, Copy, createIcons } from 'lucide';
+
+  for (const pre of document.querySelectorAll<HTMLElement>('.article-content pre')) {
+    if (pre.closest('[data-mermaid-shell]') || pre.dataset.language === 'mermaid') continue;
+    const code = pre.querySelector('code');
+    if (!code || pre.querySelector('.copy-code')) continue;
+
+    const button = document.createElement('button');
+    button.className = 'copy-code';
+    button.type = 'button';
+    button.title = '复制代码';
+    button.setAttribute('aria-label', '复制代码');
+    button.innerHTML = '<i data-lucide="copy" aria-hidden="true"></i>';
+    button.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(code.textContent ?? '');
+      button.innerHTML = '<i data-lucide="check" aria-hidden="true"></i>';
+      button.setAttribute('aria-label', '已复制');
+      createIcons({ icons: { Check } });
+      window.setTimeout(() => {
+        button.innerHTML = '<i data-lucide="copy" aria-hidden="true"></i>';
+        button.setAttribute('aria-label', '复制代码');
+        createIcons({ icons: { Copy } });
+      }, 1600);
+    });
+    pre.append(button);
+  }
+  createIcons({ icons: { Copy } });
+</script>

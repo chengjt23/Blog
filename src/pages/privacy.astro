@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../lib/site-config';
+---
+
+<BaseLayout
+  title="隐私"
+  description="本站的访问数据、第三方服务与联系信息说明。"
+  pageIndexable={false}
+>
+  <div class="page-shell">
+    <header>
+      <p class="eyebrow">Privacy</p>
+      <h1 class="page-title">隐私说明</h1>
+      <p class="page-lead">当前版本不主动加载访问分析、广告、评论或跨站追踪脚本。</p>
+    </header>
+
+    <section class="section-band">
+      <h2 class="section-heading">当前配置</h2>
+      <ul>
+        <li>
+          Analytics：{
+            siteConfig.analyticsEnabled ? '已启用，正式发布前将补充具体服务与范围' : '关闭'
+          }。
+        </li>
+        <li>Cookie：本站功能不要求设置追踪 cookie。</li>
+        <li>评论：关闭。</li>
+        <li>托管日志：正式托管商可能为安全和运维保留基础访问日志。</li>
+      </ul>
+    </section>
+
+    <section class="section-band">
+      <h2 class="section-heading">更新原则</h2>
+      <p>
+        启用
+        analytics、评论、邮件订阅或其他第三方服务前，本页必须先准确说明服务提供方、收集范围和数据流。
+      </p>
+    </section>
+  </div>
+</BaseLayout>

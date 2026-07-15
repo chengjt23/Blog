@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "transformerVersion": "1.0.0",
+  "allowlistVersion": 1,
+  "routeManifestVersion": 1,
+  "entries": [
+    {
+      "source": "bridge/B0_schrodinger_problem_timeline.md",
+      "sourceSha256": "415fd95d45cab189c499eaf9211b970a5168aaf6e068f47acca677a6c6271bc8",
+      "output": "src/content/series/schrodinger-bridge/b0-schrodinger-problem-timeline.md",
+      "outputSha256": "39ca53d41060e9e8d7d870e02e9f3702369021626d0c751eb307d59cc55992f5"
+    },
+    {
+      "source": "bridge/B1_brownian_to_diffusion_bridges.md",
+      "sourceSha256": "d6bbe7904160af07151629046de4cc9660628d0098b184df059089c64274d482",
+      "output": "src/content/series/schrodinger-bridge/b1-brownian-to-diffusion-bridges.md",
+      "outputSha256": "b1f2b4609d59d3389c55a1c4dc9ccb243537c8c8b93a1e00a835a4f08b8092e5"
+    },
+    {
+      "source": "bridge/B2_path_space_schrodinger_problem.md",
+      "sourceSha256": "6ec40e062f91a980e5f9a6838e92cd32d3be7777beb2e59f8d6ab0cb87267a4e",
+      "output": "src/content/series/schrodinger-bridge/b2-path-space-schrodinger-problem.md",
+      "outputSha256": "3d1225bd071aad4ef69b02e8b76cff3230e8b7cc8455a77d2cb76c6ce2fae19d"
+    },
+    {
+      "source": "bridge/B3_static_schrodinger_system.md",
+      "sourceSha256": "8628683d0b3af79b7beeb8aabeeb13f6d6534576bc981cbc30e340649d9497c0",
+      "output": "src/content/series/schrodinger-bridge/b3-static-schrodinger-system.md",
+      "outputSha256": "2bd50c67e5535499fe5d0af8f487536c155a1dcc184d822c70d649dc27ebaa07"
+    },
+    {
+      "source": "bridge/B4_markov_reciprocal_two_sided_dynamics.md",
+      "sourceSha256": "c0a431da2d1ec753b868957abc961f884275db3a2a658f8020643ca00ed8f861",
+      "output": "src/content/series/schrodinger-bridge/b4-markov-reciprocal-dynamics.md",
+      "outputSha256": "232174471e7a899de3169307675f2cb2747cdb8615bd6278dcdfbbfd7c80e1c9"
+    },
+    {
+      "source": "bridge/B5_schrodinger_bridge_entropic_ot.md",
+      "sourceSha256": "3de0b1108076d2aa2f7a7e3fb14dfbf3140775fdb7a293021ada8699481a0af6",
+      "output": "src/content/series/schrodinger-bridge/b5-schrodinger-bridge-entropic-ot.md",
+      "outputSha256": "4cc4838f6d1eaf9e5326d0dc2bcd4e50200146e274d78d42fc38daed10eb3ed6"
+    },
+    {
+      "source": "bridge/B6_stochastic_control_girsanov_follmer.md",
+      "sourceSha256": "fe8e48ee6a393030615c6b74699e233e2f8b72fdecd151845b63aa3c6f4aa753",
+      "output": "src/content/series/schrodinger-bridge/b6-stochastic-control-girsanov-follmer.md",
+      "outputSha256": "da2ae887f98e8de51840042f062576527888db7827d1e1797264d99364400f6c"
+    },
+    {
+      "source": "bridge/B7_classic_computation_fortet_ipf_sinkhorn.md",
+      "sourceSha256": "d46b3042a1bd0e224b7e5db96af091162d4696f462c3c1a70734b9324c25c0cc",
+      "output": "src/content/series/schrodinger-bridge/b7-fortet-ipf-sinkhorn.md",
+      "outputSha256": "06ef2f037c75a1d69610a357859ce98e0cf368b2d560b2f7f658340f44f313ba"
+    },
+    {
+      "source": "bridge/B8_high_dimensional_neural_schrodinger_bridge.md",
+      "sourceSha256": "1dcaa452ee20a865b2048e1b7cddf8e2f25a07b163a898aaf98cb8cf5d1a0e3a",
+      "output": "src/content/series/schrodinger-bridge/b8-neural-schrodinger-bridge.md",
+      "outputSha256": "622f97192e203b0bd8d7ac99a51ed24c7e98bf7aa53568992855276f1fb51d2f"
+    },
+    {
+      "source": "bridge/B9_bridge_matching_markovian_projection_imf.md",
+      "sourceSha256": "c881ea3d9daa088b03bbc36e5889698ec8bfdc402cedc1020e6ffb16cbb14f49",
+      "output": "src/content/series/schrodinger-bridge/b9-bridge-matching-markovian-projection-imf.md",
+      "outputSha256": "d47d7c138dfd4d8f3b1668555764f57d79d3a05e03f49914e2c5155dd9032dca"
+    },
+    {
+      "source": "bridge/B10_simulation_free_generalized_matching_ipmf.md",
+      "sourceSha256": "bf870902e6dd7de07a339254229e590dfde3fbf35aa8507d520681f2bf4ffcb2",
+      "output": "src/content/series/schrodinger-bridge/b10-simulation-free-generalized-matching.md",
+      "outputSha256": "96e59aceb1997a0b51d440da452ec49fba26b863aec055052a1f938d3b6bb7b0"
+    },
+    {
+      "source": "bridge/B11_extensions_discrete_multimarginal_meanfield.md",
+      "sourceSha256": "cda34f0f586240ee2c13362a622f4a2ca3b6dbcb30188c7d054fdd7ba87a708d",
+      "output": "src/content/series/schrodinger-bridge/b11-discrete-multimarginal-meanfield.md",
+      "outputSha256": "4f530bf9da8f5fd75237dc6a6e5666e3b9e58d810bf196b962e9e120bfec2bc9"
+    },
+    {
+      "source": "bridge/B12_diffusion_flow_matching_unification.md",
+      "sourceSha256": "d90ab7badc8b55a1d33cbe1e8c89b2f9b56d27c2b542e623644e4078ddd35833",
+      "output": "src/content/series/schrodinger-bridge/b12-diffusion-flow-matching-unification.md",
+      "outputSha256": "24c23d3e4ee0236287e5d13f410ef15f662e3ee7a2474b3a9e09543cce90c22c"
+    },
+    {
+      "source": "bridge/B13_applications_when_schrodinger_bridge_is_needed.md",
+      "sourceSha256": "0b35560ce8f290e35bd17dee62d722e750d5040d413c2cbfb9055ee0cbebedfa",
+      "output": "src/content/series/schrodinger-bridge/b13-applications-and-evidence.md",
+      "outputSha256": "fe0e9de55e31a85c0ea870a247f782c7d5b775cba17efe14b9b281b97ceb4fa1"
+    },
+    {
+      "source": "bridge/B14_theory_frontiers_open_problems_reading_routes.md",
+      "sourceSha256": "2b0547b489e08df70ce00934fe07ff76f23211b1bb534f4374f914f3bd8509af",
+      "output": "src/content/series/schrodinger-bridge/b14-frontiers-open-problems-reading-routes.md",
+      "outputSha256": "a167b08154749a1c6f0283757a475e0781d0aaf1f9bb90dde30c87e041be1589"
+    },
+    {
+      "source": "bridge/figures/B0_migration_likelihood.png",
+      "sourceSha256": "d8b1d1235f7485ce3f42dc9b3e6eecc1c82a29d09d601be3f307d1131b7f7e0c",
+      "output": "public/images/bridge/B0_migration_likelihood.png",
+      "outputSha256": "d8b1d1235f7485ce3f42dc9b3e6eecc1c82a29d09d601be3f307d1131b7f7e0c"
+    },
+    {
+      "source": "bridge/figures/B1_brownian_bridge.png",
+      "sourceSha256": "006d9f0929c655a8ad8e04b3af1bb43a12f661f71c998fbb32f08f3aa5a06a21",
+      "output": "public/images/bridge/B1_brownian_bridge.png",
+      "outputSha256": "006d9f0929c655a8ad8e04b3af1bb43a12f661f71c998fbb32f08f3aa5a06a21"
+    },
+    {
+      "source": "bridge/figures/B2_path_kl_projection.png",
+      "sourceSha256": "8716f5621a1504b537b952f55190a702a2c1b2502766677524abac35c1f7b4b1",
+      "output": "public/images/bridge/B2_path_kl_projection.png",
+      "outputSha256": "8716f5621a1504b537b952f55190a702a2c1b2502766677524abac35c1f7b4b1"
+    },
+    {
+      "source": "bridge/figures/B3_schrodinger_system.png",
+      "sourceSha256": "42bbc3494801db5d5e5cf48ef94e80d11cb1f4ee6d7a4395c4572491554c2a3c",
+      "output": "public/images/bridge/B3_schrodinger_system.png",
+      "outputSha256": "42bbc3494801db5d5e5cf48ef94e80d11cb1f4ee6d7a4395c4572491554c2a3c"
+    },
+    {
+      "source": "bridge/figures/B4_reciprocal_markov.png",
+      "sourceSha256": "c2bc390ea7bbfeb287068882fb533c3fc7494e00a00e107ae58e66618c3b5449",
+      "output": "public/images/bridge/B4_reciprocal_markov.png",
+      "outputSha256": "c2bc390ea7bbfeb287068882fb533c3fc7494e00a00e107ae58e66618c3b5449"
+    },
+    {
+      "source": "bridge/figures/B5_entropic_couplings.png",
+      "sourceSha256": "9bf06f790c683b2076dc89cfe323d63712fa501ac1e59cd1e932450207e7290e",
+      "output": "public/images/bridge/B5_entropic_couplings.png",
+      "outputSha256": "9bf06f790c683b2076dc89cfe323d63712fa501ac1e59cd1e932450207e7290e"
+    },
+    {
+      "source": "bridge/figures/B7_sinkhorn_diagnostics.png",
+      "sourceSha256": "2168963bc2223be1fe70db69d6502181c6c1202e6fe0a84968909c56a80c1475",
+      "output": "public/images/bridge/B7_sinkhorn_diagnostics.png",
+      "outputSha256": "2168963bc2223be1fe70db69d6502181c6c1202e6fe0a84968909c56a80c1475"
+    },
+    {
+      "source": "bridge/figures/B8_population_regression.png",
+      "sourceSha256": "56ef651d0d98443c50f9e904e31558c010d53dc3360baa27daa621eaaa91715c",
+      "output": "public/images/bridge/B8_population_regression.png",
+      "outputSha256": "56ef651d0d98443c50f9e904e31558c010d53dc3360baa27daa621eaaa91715c"
+    },
+    {
+      "source": "bridge/figures/B9_markovian_projection.png",
+      "sourceSha256": "12e35e2131571e6768b37006f77ecbcc4fda0da6f32ce7f96bec88cc7bf8407f",
+      "output": "public/images/bridge/B9_markovian_projection.png",
+      "outputSha256": "12e35e2131571e6768b37006f77ecbcc4fda0da6f32ce7f96bec88cc7bf8407f"
+    },
+    {
+      "source": "bridge/figures/B10_sf2m_population_identity.png",
+      "sourceSha256": "ad82230f87aa0d2ed6e6fe7c04bab6e7675ddd6557fe4c501cede8323fd4e7de",
+      "output": "public/images/bridge/B10_sf2m_population_identity.png",
+      "outputSha256": "ad82230f87aa0d2ed6e6fe7c04bab6e7675ddd6557fe4c501cede8323fd4e7de"
+    },
+    {
+      "source": "bridge/figures/B12_same_marginals_paths.png",
+      "sourceSha256": "dd6712202df5c6e0aab3062a1274aa97c03fd4a75f7b5059bac76c5d62022669",
+      "output": "public/images/bridge/B12_same_marginals_paths.png",
+      "outputSha256": "dd6712202df5c6e0aab3062a1274aa97c03fd4a75f7b5059bac76c5d62022669"
+    },
+    {
+      "source": "bridge/figures/B13_rare_event_doob.png",
+      "sourceSha256": "01350d72eb0f9b774df91769dd4a5b930fd62236625853eb1c87bb9dd5591bc3",
+      "output": "public/images/bridge/B13_rare_event_doob.png",
+      "outputSha256": "01350d72eb0f9b774df91769dd4a5b930fd62236625853eb1c87bb9dd5591bc3"
+    }
+  ]
+}

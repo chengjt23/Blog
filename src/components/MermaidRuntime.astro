@@ -1,0 +1,50 @@
+<script>
+  import mermaid from 'mermaid';
+
+  async function renderMermaid() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: dark ? 'dark' : 'neutral',
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    });
+
+    for (const pre of document.querySelectorAll<HTMLElement>('pre[data-language="mermaid"]')) {
+      if (pre.closest('[data-mermaid-shell]')) continue;
+      const shell = document.createElement('div');
+      const diagram = document.createElement('div');
+      const source = pre.textContent ?? '';
+      shell.className = 'mermaid-shell';
+      shell.dataset.mermaidShell = '';
+      shell.dataset.source = source;
+      pre.classList.add('mermaid-fallback');
+      diagram.className = 'mermaid';
+      diagram.hidden = true;
+      diagram.setAttribute('aria-label', '流程图');
+      pre.before(shell);
+      shell.append(pre, diagram);
+    }
+
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-mermaid-shell]'));
+    for (const shell of nodes) {
+      const diagram = shell.querySelector<HTMLElement>('.mermaid');
+      const fallback = shell.querySelector<HTMLElement>('.mermaid-fallback');
+      if (!diagram || !fallback) continue;
+      const source = shell.dataset.source ?? diagram.textContent ?? '';
+      shell.dataset.source = source;
+      diagram.replaceChildren(document.createTextNode(source));
+      diagram.hidden = false;
+      fallback.hidden = false;
+      try {
+        await mermaid.run({ nodes: [diagram], suppressErrors: false });
+        fallback.hidden = true;
+      } catch {
+        diagram.hidden = true;
+      }
+    }
+  }
+
+  void renderMermaid();
+  window.addEventListener('site-theme-change', () => void renderMermaid());
+</script>

@@ -1,0 +1,25 @@
+---
+import { Rss } from '@lucide/astro';
+import { withBasePath } from '../lib/paths';
+import { siteConfig } from '../lib/site-config';
+---
+
+<footer class="site-footer" data-pagefind-ignore>
+  <div class="footer-inner">
+    <div>
+      <strong>{siteConfig.name}</strong><br />
+      <span
+        >{
+          siteConfig.license === 'all-rights-reserved' ? 'All rights reserved.' : siteConfig.license
+        }</span
+      >
+    </div>
+    <nav class="footer-links" aria-label="页脚导航">
+      <a href={withBasePath('/privacy/')}>隐私</a>
+      <a href={withBasePath('/license/')}>许可</a>
+      <a href={withBasePath('/rss.xml')} aria-label="RSS 订阅"
+        ><Rss size={15} aria-hidden="true" /> RSS</a
+      >
+    </nav>
+  </div>
+</footer>

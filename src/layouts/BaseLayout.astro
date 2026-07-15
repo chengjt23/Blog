@@ -1,0 +1,96 @@
+---
+import 'katex/dist/katex.min.css';
+import '../styles/global.css';
+import MermaidRuntime from '../components/MermaidRuntime.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { withBasePath } from '../lib/paths';
+import { canonicalUrl, isIndexable, siteConfig } from '../lib/site-config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  pageIndexable?: boolean;
+  hasMermaid?: boolean;
+  type?: 'website' | 'article';
+  jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+const {
+  title,
+  description = siteConfig.description,
+  image = '/images/bridge/B0_migration_likelihood.png',
+  pageIndexable = true,
+  hasMermaid = false,
+  type = 'website',
+  jsonLd,
+} = Astro.props;
+const fullTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name;
+const canonical = canonicalUrl(Astro.url.pathname);
+const robots = isIndexable && pageIndexable ? 'index,follow' : 'noindex,nofollow';
+const imageUrl = new URL(withBasePath(image), siteConfig.url).toString();
+---
+
+<!doctype html>
+<html lang={siteConfig.language}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    <meta name="theme-color" content="#f7f7f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#171916" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="icon" type="image/svg+xml" href={withBasePath('/favicon.svg')} />
+    <link rel="manifest" href={withBasePath('/manifest.webmanifest')} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${siteConfig.name} RSS`}
+      href={withBasePath('/rss.xml')}
+    />
+    <title>{fullTitle}</title>
+    {
+      jsonLd && (
+        <script
+          is:inline
+          type="application/ld+json"
+          set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')}
+        />
+      )
+    }
+    <script is:inline>
+      (() => {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const apply = () => {
+          const theme = media.matches ? 'dark' : 'light';
+          document.documentElement.dataset.theme = theme;
+          window.dispatchEvent(new CustomEvent('site-theme-change', { detail: theme }));
+        };
+        apply();
+        media.addEventListener('change', apply);
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <SiteHeader pathname={Astro.url.pathname} />
+    <main
+      id="main-content"
+      data-pagefind-body={pageIndexable ? true : undefined}
+      data-pagefind-ignore={pageIndexable ? undefined : true}
+    >
+      <slot />
+    </main>
+    <SiteFooter />
+    {hasMermaid && <MermaidRuntime />}
+  </body>
+</html>

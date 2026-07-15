@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { chapterUrl, getChapters } from '../../../lib/content';
+
+const chapters = await getChapters();
+---
+
+<BaseLayout
+  title="Schrödinger Bridge"
+  description="15 章系统 Blog：从 Schrödinger 原始问题、路径空间熵投影与随机控制，到现代神经桥匹配、应用和理论前沿。"
+>
+  <div class="page-shell">
+    <header>
+      <p class="eyebrow">Blog · B0-B14</p>
+      <h1 class="page-title">Schrödinger Bridge</h1>
+      <p class="page-lead">
+        一条从概率论基础进入现代生成建模的完整路径。建议具备概率、测度、随机过程和基础最优传输知识。
+      </p>
+    </header>
+
+    <section class="section-band" aria-labelledby="reading-route">
+      <h2 class="section-heading" id="reading-route">阅读路线</h2>
+      <p class="page-lead">
+        首次阅读按 B0 到 B14 前进。若只关心现代方法，可先读 B2、B4、B6，再进入 B8-B12；应用判断见
+        B13，保证层级和开放问题见 B14。
+      </p>
+    </section>
+
+    <section class="section-band" aria-labelledby="all-chapters">
+      <h2 class="section-heading" id="all-chapters">全部文章</h2>
+      <ol class="chapter-list">
+        {
+          chapters.map((chapter) => (
+            <li>
+              <a class="chapter-row" href={chapterUrl(chapter)}>
+                <span class="chapter-number">B{chapter.data.order}</span>
+                <span class="chapter-row-title">{chapter.data.title}</span>
+                <span class="chapter-row-arrow" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+  </div>
+</BaseLayout>

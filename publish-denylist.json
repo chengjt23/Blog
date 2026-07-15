@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "paths": [
+    "references/papers/",
+    "references/chapter_packets/",
+    "bridge/staging/",
+    "tmp/",
+    "WORKLOG.md",
+    "RESEARCH_MAP.md"
+  ],
+  "contentPatterns": [
+    "formal_draft_complete",
+    "source_verified",
+    "references/papers/",
+    "bridge/staging/",
+    "D:\\\\",
+    "Preview Author"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "研究笔记",
+  "short_name": "研究笔记",
+  "description": "生成建模、随机过程与最优传输的系统教程与研究笔记。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f7f3",
+  "theme_color": "#20231f",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

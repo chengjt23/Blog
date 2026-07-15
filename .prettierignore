@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+public/pagefind/
+public/images/
+public/_headers
+src/content/series/
+generated-manifest.json
+package-lock.json
+artifacts/

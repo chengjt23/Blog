@@ -1,0 +1,89 @@
+---
+import { Search } from '@lucide/astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="搜索" description="搜索 Blog 标题和正文。" pageIndexable={false}>
+  <div class="page-shell search-shell">
+    <header>
+      <p class="eyebrow">Search</p>
+      <h1 class="page-title">站内搜索</h1>
+    </header>
+
+    <section class="section-band">
+      <label class="search-label" for="search-input">关键词</label>
+      <div class="search-input-wrap">
+        <Search size={20} aria-hidden="true" />
+        <input
+          id="search-input"
+          type="search"
+          autocomplete="off"
+          placeholder="例如：Markovian projection"
+        />
+      </div>
+      <p class="search-status" id="search-status" aria-live="polite">输入关键词开始搜索。</p>
+      <ol class="search-results" id="search-results"></ol>
+    </section>
+  </div>
+
+  <script>
+    const input = document.querySelector<HTMLInputElement>('#search-input');
+    const status = document.querySelector<HTMLElement>('#search-status');
+    const results = document.querySelector<HTMLOListElement>('#search-results');
+    type PagefindData = { url: string; meta: { title?: string }; excerpt: string };
+    type PagefindResult = { data: () => Promise<PagefindData> };
+    type PagefindModule = {
+      search: (query: string) => Promise<{ results: PagefindResult[] }>;
+    };
+    let pagefind: PagefindModule | undefined;
+    const baseUrl = import.meta.env.BASE_URL;
+
+    function withSearchBase(url: string): string {
+      if (/^(?:https?:)?\/\//.test(url) || baseUrl === '/') return url;
+      const base = baseUrl.replace(/\/$/, '');
+      if (url === base || url.startsWith(`${base}/`)) return url;
+      return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+    }
+
+    async function loadPagefind(): Promise<PagefindModule | undefined> {
+      try {
+        const pagefindPath = `${baseUrl}pagefind/pagefind.js`;
+        return (await import(/* @vite-ignore */ pagefindPath)) as PagefindModule;
+      } catch {
+        return undefined;
+      }
+    }
+
+    input?.addEventListener('input', async () => {
+      const query = input.value.trim();
+      if (!status || !results) return;
+      results.replaceChildren();
+      if (!query) {
+        status.textContent = '输入关键词开始搜索。';
+        return;
+      }
+
+      pagefind ??= await loadPagefind();
+      if (!pagefind) {
+        status.textContent = '搜索索引将在 production build 后可用。';
+        return;
+      }
+
+      const search = await pagefind.search(query);
+      const data = await Promise.all(
+        search.results.slice(0, 12).map((result: PagefindResult) => result.data()),
+      );
+      status.textContent = `找到 ${search.results.length} 条结果。`;
+      for (const item of data) {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        const excerpt = document.createElement('p');
+        link.href = withSearchBase(item.url);
+        link.textContent = item.meta.title ?? item.url;
+        excerpt.innerHTML = item.excerpt;
+        li.append(link, excerpt);
+        results.append(li);
+      }
+    });
+  </script>
+</BaseLayout>
