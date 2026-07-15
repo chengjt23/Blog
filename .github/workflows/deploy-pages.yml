@@ -39,7 +39,19 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        shell: bash
+        run: |
+          npm install --global npm@11.6.2
+          npm --version
+          set +e
+          npm ci 2>&1 | tee npm-ci.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            summary=$(tail -n 60 npm-ci.log | tr '\n' ' ' | sed 's/%/%25/g')
+            echo "::error title=npm ci failed::$summary"
+            exit "$status"
+          fi
 
       - name: Run static checks
         run: |
