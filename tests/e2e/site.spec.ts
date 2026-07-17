@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 const configuredBase = process.env.PUBLIC_BASE_PATH ?? '';
-const basePath = configuredBase === '/' ? '' : `/${configuredBase.replace(/^\/+|\/+$/g, '')}`;
+const basePath =
+  !configuredBase || configuredBase === '/' ? '' : `/${configuredBase.replace(/^\/+|\/+$/g, '')}`;
 const pagePath = (pathname: string) => `${basePath}${pathname}`;
 
 test('desktop Home is empty and Blog titles open directly', async ({ page }) => {
@@ -22,12 +23,49 @@ test('desktop Home is empty and Blog titles open directly', async ({ page }) => 
 
   await page.getByRole('link', { name: 'Blog' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Blog');
+  const diffusionTitle = page.getByRole('link', { name: 'Diffusion', exact: true });
+  await expect(diffusionTitle).toHaveAttribute('href', pagePath('/blog/diffusion/'));
   const blogTitle = page.getByRole('link', { name: 'Schrödinger Bridge', exact: true });
   await expect(blogTitle).toHaveAttribute('href', pagePath('/blog/schrodinger-bridge/'));
   await page.screenshot({ path: 'artifacts/qa/blog-desktop.png', fullPage: true });
   await blogTitle.click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Schrödinger Bridge');
   await expect(page.locator('.chapter-row')).toHaveCount(15);
+});
+
+test('Diffusion Blog publishes all chapters with math, images, and direct navigation', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(pagePath('/blog/'));
+  await page.getByRole('link', { name: 'Diffusion', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Diffusion');
+  await expect(page.locator('.chapter-row')).toHaveCount(14);
+  await page.screenshot({ path: 'artifacts/qa/diffusion-index-desktop.png', fullPage: true });
+
+  await page.getByRole('link', { name: /连续时间统一/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('连续时间统一');
+  await expect(page.locator('.chapter-meta')).toContainText('正式版 v1.0');
+  expect(await page.locator('.katex-display').count()).toBeGreaterThanOrEqual(5);
+  const images = page.locator('.article-content img');
+  for (let index = 0; index < (await images.count()); index += 1) {
+    const image = images.nth(index);
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        image.evaluate((node) => {
+          const imageNode = node as HTMLImageElement;
+          return imageNode.complete && imageNode.naturalWidth > 0;
+        }),
+      )
+      .toBe(true);
+  }
+  await expect(page.locator('.series-nav-list').first()).toContainText('D13');
+  await page.screenshot({ path: 'artifacts/qa/diffusion-chapter-viewport.png' });
+  await expect(page.getByRole('link', { name: /下一篇 · D5/ })).toHaveAttribute(
+    'href',
+    /d5-parameterization-training-design/,
+  );
 });
 
 test('chapter navigation, code tools, and dark theme work', async ({ page }) => {
@@ -94,4 +132,11 @@ test('Pagefind returns Chinese and English technical results', async ({ page }) 
 
   await input.fill('随机控制');
   await expect(page.locator('#search-results li').first()).toBeVisible({ timeout: 10_000 });
+
+  await input.fill('Probability-Flow ODE');
+  await expect(page.locator('#search-results li').first()).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('#search-results li a').first()).toHaveAttribute(
+    'href',
+    /\/blog\/diffusion\//,
+  );
 });

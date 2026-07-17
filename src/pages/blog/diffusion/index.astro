@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { chapterUrl, getChapters } from '../../../lib/content';
+
+const chapters = await getChapters('diffusion');
+---
+
+<BaseLayout
+  title="Diffusion"
+  description="14 章系统 Blog：从前向扩散、DDPM、Score 与 SDE，到采样、Guidance、架构、Flow、离散模型、应用和理论安全。"
+  image="/images/diffusion/d0_problem_solution_map.png"
+>
+  <div class="page-shell">
+    <header>
+      <p class="eyebrow">Blog · D0-D13</p>
+      <h1 class="page-title">Diffusion</h1>
+      <p class="page-lead">
+        从生成建模问题进入现代 Diffusion
+        系统的完整路径。主线覆盖概率建模、训练目标、连续时间动力学、有限步采样与现代生成接口。
+      </p>
+    </header>
+
+    <section class="section-band" aria-labelledby="reading-route">
+      <h2 class="section-heading" id="reading-route">阅读路线</h2>
+      <p class="page-lead">
+        首次阅读按 D0 到 D13 前进。理论主干为 D0-D6；现代控制、架构、少步生成与离散模型见
+        D7-D10；应用、理论边界和论文路线见 D11-D13。
+      </p>
+    </section>
+
+    <section class="section-band" aria-labelledby="all-chapters">
+      <h2 class="section-heading" id="all-chapters">全部文章</h2>
+      <ol class="chapter-list">
+        {
+          chapters.map((chapter) => (
+            <li>
+              <a class="chapter-row" href={chapterUrl(chapter)}>
+                <span class="chapter-number">D{chapter.data.order}</span>
+                <span class="chapter-row-title">{chapter.data.title}</span>
+                <span class="chapter-row-arrow" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+  </div>
+</BaseLayout>

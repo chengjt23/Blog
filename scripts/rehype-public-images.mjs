@@ -1,20 +1,25 @@
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { visit } from 'unist-util-visit';
 
-const dimensions = {
-  'B0_migration_likelihood.png': [2828, 724],
-  'B1_brownian_bridge.png': [1870, 676],
-  'B2_path_kl_projection.png': [1871, 712],
-  'B3_schrodinger_system.png': [1924, 603],
-  'B4_reciprocal_markov.png': [1926, 649],
-  'B5_entropic_couplings.png': [1887, 647],
-  'B7_sinkhorn_diagnostics.png': [2587, 760],
-  'B8_population_regression.png': [1964, 776],
-  'B9_markovian_projection.png': [2594, 776],
-  'B10_sf2m_population_identity.png': [2015, 774],
-  'B12_same_marginals_paths.png': [2802, 758],
-  'B13_rare_event_doob.png': [2568, 778],
-};
+const publicImagesRoot = fileURLToPath(new URL('../public/images/', import.meta.url));
+
+function pngDimensions(file) {
+  const bytes = readFileSync(file);
+  if (bytes.length < 24 || bytes.toString('ascii', 1, 4) !== 'PNG') {
+    throw new Error(`Unsupported public image format: ${file}`);
+  }
+  return [bytes.readUInt32BE(16), bytes.readUInt32BE(20)];
+}
+
+const dimensions = Object.fromEntries(
+  ['bridge', 'diffusion'].flatMap((directory) =>
+    readdirSync(path.join(publicImagesRoot, directory))
+      .filter((name) => name.toLowerCase().endsWith('.png'))
+      .map((name) => [name, pngDimensions(path.join(publicImagesRoot, directory, name))]),
+  ),
+);
 
 export default function rehypePublicImages({ basePath = '' } = {}) {
   return (tree) => {

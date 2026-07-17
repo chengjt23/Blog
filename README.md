@@ -4,10 +4,10 @@ Astro static site for publishing the approved subset of the research workspace.
 
 ## Current State
 
-- Local release candidate is implemented.
+- Bridge v1.0 is live and Diffusion v1.0 is included in the current release.
 - All preview pages are `noindex,nofollow`.
-- Public identity and release approval are intentionally unresolved.
-- Do not create a public repository or deploy this directory before `DECISIONS.md` is approved.
+- The public repository deploys from `main` through GitHub Actions.
+- Search-engine indexing remains intentionally disabled until a separate explicit approval.
 
 See [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for completed checks and remaining gates.
 
@@ -33,8 +33,8 @@ npx astro dev stop
 Open `http://127.0.0.1:4173/`.
 
 The public header contains only `Home` and `Blog`. Home is intentionally blank until approved personal
-content is supplied. The current long-form topic is available at `/blog/schrodinger-bridge/`; legacy
-`/series/*` URLs redirect to their `/blog/*` equivalents.
+content is supplied. The long-form topics are available at `/blog/schrodinger-bridge/` and
+`/blog/diffusion/`; legacy `/series/*` URLs redirect to their `/blog/*` equivalents.
 
 ## GitHub Pages
 
@@ -42,8 +42,8 @@ The deployment target is `https://chengjt23.github.io/Blog/`. The workflow in
 `.github/workflows/deploy-pages.yml` runs checks, builds with the `/Blog/` base path, runs Chrome tests,
 and deploys `dist` after a push to `main`.
 
-Before the first deployment, open the repository's `Settings -> Pages` and set `Source` to
-`GitHub Actions`. The initial deployment is a `public-beta` with `noindex,nofollow`.
+GitHub Pages uses `GitHub Actions` as its source. The current deployment remains a `public-beta` with
+`noindex,nofollow`.
 
 To reproduce the Pages build locally:
 
@@ -82,7 +82,9 @@ npm run validate-content
 The sync step writes only:
 
 - `src/content/series/schrodinger-bridge/`
+- `src/content/series/diffusion/`
 - `public/images/bridge/`
+- `public/images/diffusion/`
 - `generated-manifest.json`
 
 It never modifies `../bridge/`, `../diffusion/`, or `../references/`.

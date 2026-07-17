@@ -3,12 +3,18 @@ import { withBasePath } from './paths';
 import { isProduction } from './site-config';
 
 export type ChapterEntry = CollectionEntry<'series'>;
+export type SeriesId = ChapterEntry['data']['series'];
 
-export async function getChapters(): Promise<ChapterEntry[]> {
-  const entries = await getCollection('series', ({ data }) => !isProduction || !data.draft);
+export async function getChapters(
+  series: SeriesId = 'schrodinger-bridge',
+): Promise<ChapterEntry[]> {
+  const entries = await getCollection(
+    'series',
+    ({ data }) => data.series === series && (!isProduction || !data.draft),
+  );
   return entries.sort((a, b) => a.data.order - b.data.order);
 }
 
 export function chapterUrl(entry: ChapterEntry): string {
-  return withBasePath(`/blog/schrodinger-bridge/${entry.data.slug}/`);
+  return withBasePath(`/blog/${entry.data.series}/${entry.data.slug}/`);
 }

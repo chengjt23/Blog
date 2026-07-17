@@ -1,7 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
 const configuredBase = process.env.PUBLIC_BASE_PATH ?? '';
-const basePath = configuredBase === '/' ? '' : `/${configuredBase.replace(/^\/+|\/+$/g, '')}`;
+const basePath =
+  !configuredBase || configuredBase === '/' ? '' : `/${configuredBase.replace(/^\/+|\/+$/g, '')}`;
 const previewUrl = `http://127.0.0.1:4174${basePath}/`;
 
 export default defineConfig({

@@ -5,9 +5,10 @@ import { chapterUrl } from '../lib/content';
 interface Props {
   chapters: ChapterEntry[];
   currentSlug: string;
+  prefix?: 'B' | 'D';
 }
 
-const { chapters, currentSlug } = Astro.props;
+const { chapters, currentSlug, prefix = 'B' } = Astro.props;
 ---
 
 <ul class="series-nav-list">
@@ -18,7 +19,8 @@ const { chapters, currentSlug } = Astro.props;
           href={chapterUrl(chapter)}
           aria-current={chapter.data.slug === currentSlug ? 'page' : undefined}
         >
-          B{chapter.data.order} · {chapter.data.title}
+          {prefix}
+          {chapter.data.order} · {chapter.data.title}
         </a>
       </li>
     ))

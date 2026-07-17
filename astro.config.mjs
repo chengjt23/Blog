@@ -20,13 +20,22 @@ const basePath = normalizeBasePath(process.env.PUBLIC_BASE_PATH);
 const routeManifest = JSON.parse(
   readFileSync(new URL('./route-manifest.json', import.meta.url), 'utf8'),
 );
+/** @type {{ chapters: Array<{ slug: string }> }} */
+const diffusionRouteManifest = JSON.parse(
+  readFileSync(new URL('./route-manifest.diffusion.json', import.meta.url), 'utf8'),
+);
 const redirects = Object.fromEntries([
   ['/series', withBasePath('/blog')],
   ['/series/schrodinger-bridge', withBasePath('/blog/schrodinger-bridge')],
+  ['/series/diffusion', withBasePath('/blog/diffusion')],
   ['/about', withBasePath('/')],
   ...routeManifest.chapters.map((chapter) => [
     `/series/schrodinger-bridge/${chapter.slug}`,
     withBasePath(`/blog/schrodinger-bridge/${chapter.slug}`),
+  ]),
+  ...diffusionRouteManifest.chapters.map((chapter) => [
+    `/series/diffusion/${chapter.slug}`,
+    withBasePath(`/blog/diffusion/${chapter.slug}`),
   ]),
 ]);
 

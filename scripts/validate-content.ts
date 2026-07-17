@@ -20,8 +20,8 @@ const siteRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const manifest = await readJson<GeneratedManifest>(path.join(siteRoot, 'generated-manifest.json'));
 const denylist = await readJson<Denylist>(path.join(siteRoot, 'publish-denylist.json'));
 
-if (manifest.entries.length !== 27) {
-  throw new Error(`Expected 27 generated entries, received ${manifest.entries.length}.`);
+if (manifest.entries.length !== 97) {
+  throw new Error(`Expected 97 generated entries, received ${manifest.entries.length}.`);
 }
 
 const outputSet = new Set<string>();

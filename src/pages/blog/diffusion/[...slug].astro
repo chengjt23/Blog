@@ -1,0 +1,136 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import CodeEnhancements from '../../../components/CodeEnhancements.astro';
+import SeriesNav from '../../../components/SeriesNav.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { chapterUrl, getChapters } from '../../../lib/content';
+import { withBasePath } from '../../../lib/paths';
+import { siteConfig } from '../../../lib/site-config';
+
+export async function getStaticPaths() {
+  const entries = await getChapters('diffusion');
+  return entries.map((entry) => ({ params: { slug: entry.data.slug }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<'series'>;
+}
+
+const { entry } = Astro.props;
+const chapters = await getChapters('diffusion');
+const { Content, headings } = await render(entry);
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+const previous = chapters.find((chapter) => chapter.data.order === entry.data.order - 1);
+const next = chapters.find((chapter) => chapter.data.order === entry.data.order + 1);
+const readingMinutes = Math.max(1, Math.ceil((entry.body ?? '').length / 900));
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: entry.data.title,
+  description: entry.data.description,
+  dateModified: entry.data.updatedAt.toISOString(),
+  inLanguage: siteConfig.language,
+  isPartOf: {
+    '@type': 'Blog',
+    name: 'Diffusion',
+  },
+  ...(siteConfig.isPreview
+    ? {}
+    : {
+        author: { '@type': 'Person', name: siteConfig.author },
+        datePublished: entry.data.publishedAt,
+      }),
+};
+---
+
+<BaseLayout
+  title={`D${entry.data.order}. ${entry.data.title}`}
+  description={entry.data.description}
+  image="/images/diffusion/d0_problem_solution_map.png"
+  hasMermaid={entry.data.mermaid}
+  type="article"
+  jsonLd={jsonLd}
+>
+  <div class="article-shell">
+    <aside class="series-rail" aria-label="Blog 文章">
+      <div class="series-rail-inner">
+        <p class="rail-title">Diffusion</p>
+        <SeriesNav chapters={chapters} currentSlug={entry.data.slug} prefix="D" />
+      </div>
+    </aside>
+
+    <article class="chapter-main">
+      <details class="mobile-series-nav" data-pagefind-ignore>
+        <summary>D{entry.data.order} / 14 · 展开 Blog 目录</summary>
+        <SeriesNav chapters={chapters} currentSlug={entry.data.slug} prefix="D" />
+      </details>
+
+      <nav class="breadcrumbs" aria-label="面包屑" data-pagefind-ignore>
+        <a href={withBasePath('/blog/')}>Blog</a><span>/</span>
+        <a href={withBasePath('/blog/diffusion/')}>Diffusion</a><span>/</span>
+        <span>D{entry.data.order}</span>
+      </nav>
+
+      <header class="chapter-header">
+        <p class="eyebrow">D{entry.data.order} · Diffusion</p>
+        <h1 class="chapter-title">{entry.data.title}</h1>
+        <p class="chapter-description">{entry.data.description}</p>
+        <div class="chapter-meta">
+          <span>正式版 v1.0</span>
+          <span>校订于 {entry.data.updatedAt.toISOString().slice(0, 10)}</span>
+          <span>约 {readingMinutes} 分钟</span>
+        </div>
+        <p class="scope-callout"><strong>本章范围：</strong>{entry.data.scope}</p>
+      </header>
+
+      <div class="article-content">
+        <Content />
+      </div>
+      <CodeEnhancements />
+
+      <nav class="chapter-footer-nav" aria-label="前后文章" data-pagefind-ignore>
+        {
+          previous ? (
+            <a href={chapterUrl(previous)}>
+              <span class="nav-direction">上一篇 · D{previous.data.order}</span>
+              <span class="nav-chapter-title">{previous.data.title}</span>
+            </a>
+          ) : (
+            <a href={withBasePath('/blog/diffusion/')}>
+              <span class="nav-direction">返回</span>
+              <span class="nav-chapter-title">Blog 目录</span>
+            </a>
+          )
+        }
+        {
+          next ? (
+            <a href={chapterUrl(next)}>
+              <span class="nav-direction">下一篇 · D{next.data.order}</span>
+              <span class="nav-chapter-title">{next.data.title}</span>
+            </a>
+          ) : (
+            <a href={withBasePath('/blog/diffusion/')}>
+              <span class="nav-direction">完成</span>
+              <span class="nav-chapter-title">返回 Blog 目录</span>
+            </a>
+          )
+        }
+      </nav>
+    </article>
+
+    <aside class="toc-rail" aria-label="页内目录" data-pagefind-ignore>
+      <div class="toc-rail-inner">
+        <p class="rail-title">本页目录</p>
+        <ol class="toc-list">
+          {
+            toc.map((heading) => (
+              <li class={`toc-depth-${heading.depth}`}>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </aside>
+  </div>
+</BaseLayout>

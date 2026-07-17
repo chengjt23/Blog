@@ -13,6 +13,34 @@ import { withBasePath } from '../../lib/paths';
 
     <article class="section-band series-feature">
       <div>
+        <p class="eyebrow">14 chapters · v1.0</p>
+        <h2>
+          <a class="blog-title-link" href={withBasePath('/blog/diffusion/')}>Diffusion</a>
+        </h2>
+        <p>
+          从生成建模、DDPM、Score 与 SDE
+          出发，进入采样、Guidance、架构、Flow、离散模型、应用和理论安全。
+        </p>
+      </div>
+      <a
+        class="blog-figure-link"
+        href={withBasePath('/blog/diffusion/')}
+        aria-label="进入 Diffusion Blog"
+      >
+        <figure>
+          <img
+            src={withBasePath('/images/diffusion/d0_problem_solution_map.png')}
+            width="3453"
+            height="1891"
+            alt="Diffusion 问题、方法与研究边界的全局地图"
+          />
+          <figcaption>从生成问题到现代 Diffusion 系统的全局地图。</figcaption>
+        </figure>
+      </a>
+    </article>
+
+    <article class="section-band series-feature">
+      <div>
         <p class="eyebrow">15 chapters · v1.0</p>
         <h2>
           <a class="blog-title-link" href={withBasePath('/blog/schrodinger-bridge/')}>

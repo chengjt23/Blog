@@ -108,7 +108,9 @@ for (const file of htmlFiles) {
   });
 
   if (
-    /formal_draft_complete|source_verified|references\/papers|bridge\/staging|D:\\\\/.test(html)
+    /formal_draft_complete|source_verified|tutorial_ready|references\/(?:papers|chapter_packets|code\/diffusion|notes\/sources)|bridge\/staging|diffusion\/code|D:\\\\/.test(
+      html,
+    )
   ) {
     errors.push(`${route}: contains private or research-only text`);
   }
