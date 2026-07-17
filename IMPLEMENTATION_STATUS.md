@@ -38,7 +38,8 @@
 - Playwright: 6 tests pass for empty Home, both direct Blog entries, Diffusion math/images/navigation, desktop/mobile navigation, system dark mode, Mermaid, and Pagefind.
 - GitHub Pages public-beta build and all 6 Playwright tests pass under `/Blog/`.
 - GitHub Actions build and deploy jobs pass for Bridge v1.0 commit `36e089a` in run `29560298779`.
-- Online smoke passes for Home, Blog, direct topic-title entry, all 15 chapters, formal v1.0 metadata, images, Pagefind, RSS, mobile navigation, and zero horizontal overflow.
+- GitHub Actions build and deploy jobs pass for Diffusion v1.0 commit `b6c8e5b` in run `29564516973`.
+- Online smoke passes for Home, Blog, both direct topic-title entries, all 29 chapters, formal v1.0 metadata, images, KaTeX, Pagefind, RSS, mobile navigation, and zero horizontal overflow.
 - Screenshots: `artifacts/qa/`.
 
 ## Required User Gate
