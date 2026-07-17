@@ -1,7 +1,7 @@
 # Implementation Status
 
-> State: `github_pages_public_beta_live`
-> Date: 2026-07-15
+> State: `github_pages_bridge_v1_live`
+> Date: 2026-07-17
 
 ## Completed
 
@@ -9,6 +9,7 @@
 - Four-environment publication and indexing policy.
 - Conservative allowlist/denylist and explicit dry-run/write sync modes.
 - Markdown AST transformation for 15 Bridge chapters.
+- Schrödinger Bridge B0-B14 is published as formal release v1.0 with `publishedAt` and `updatedAt` set to 2026-07-17.
 - Relative source/output SHA-256 manifest with 27 generated entries.
 - 12 original figures with stable dimensions, alt text, and captions.
 - Internal status removal and source-note official URL mapping.
@@ -28,24 +29,24 @@
 
 - `astro check`: 0 errors, 0 warnings, 0 hints.
 - ESLint and Prettier: pass.
-- Vitest: 4 tests pass.
+- Vitest: 7 tests pass.
 - Static build: 22 content pages plus 18 compatibility redirects generated.
 - Pagefind: 18 approved content pages indexed.
 - Generated HTML audit: 22 content pages and 18 redirects pass links, redirect targets, H1, images, robots, and leakage checks.
 - Playwright: 5 tests pass for empty Home, direct Blog entry, desktop/mobile navigation, system dark mode, Mermaid, and Pagefind.
 - GitHub Pages public-beta build and all 5 Playwright tests pass under `/Blog/`.
-- GitHub Actions build and deploy jobs pass for commit `8638e11`.
-- Online smoke passes for Home, Blog, topic entry, images, Pagefind, mobile navigation, and zero failed network responses.
+- GitHub Actions build and deploy jobs pass for Bridge v1.0 commit `36e089a` in run `29560298779`.
+- Online smoke passes for Home, Blog, direct topic-title entry, all 15 chapters, formal v1.0 metadata, images, Pagefind, RSS, mobile navigation, and zero horizontal overflow.
 - Screenshots: `artifacts/qa/`.
 
 ## Required User Gate
 
-The public beta is live at `https://chengjt23.github.io/Blog/`. The repository is public, `main` deploys
+Bridge v1.0 is live at `https://chengjt23.github.io/Blog/`. The repository is public, `main` deploys
 through GitHub Actions, and indexing remains disabled. No custom domain or production indexing action has
 been performed.
 
-The remaining release gate is the user's online public-beta approval. Production indexing, sitemap
-submission, and any custom domain change require a separate explicit decision.
+The remaining release gate is a separate explicit decision to enable search-engine indexing. Sitemap
+submission and any custom domain change also require separate approval.
 
 ## Deferred P1/P2
 
