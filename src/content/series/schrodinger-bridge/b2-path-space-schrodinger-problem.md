@@ -1,9 +1,9 @@
 ---
 title: 路径空间上的 Schrödinger Problem
 description: 在路径测度上定义动态 Schrödinger 问题，并用相对熵分解说明端点耦合与条件桥的职责。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 2
@@ -13,7 +13,7 @@ tags:
   - path-space
   - relative-entropy
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

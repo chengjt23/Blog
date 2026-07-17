@@ -242,7 +242,7 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
     .stringify(tree);
 
   const publicBody = body
-    .replace(/`?formal_draft_complete_v0\.1`?/g, '公开预览版 v0.1')
+    .replace(/`?formal_draft_complete_v0\.1`?/g, '正式版 v1.0')
     .replace(/`?source_verified_bounded`?/g, '已完成有界范围的来源核验')
     .replace(/`?source_verified`?/g, '已完成来源核验');
 
@@ -311,7 +311,7 @@ for (const asset of allowlist.assets) {
 
 const generatedManifest = {
   version: 1,
-  transformerVersion: '1.0.0',
+  transformerVersion: '1.1.0',
   allowlistVersion: allowlist.version,
   routeManifestVersion: routes.version,
   entries: generated,

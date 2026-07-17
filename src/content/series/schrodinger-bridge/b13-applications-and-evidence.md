@@ -1,9 +1,9 @@
 ---
 title: 应用：何时真正需要 Schrödinger Bridge
 description: 用证据矩阵审视图像转换、单细胞、稀有事件等应用，判断收益是否真的来自双端路径约束。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 13
@@ -13,7 +13,7 @@ tags:
   - applications
   - rare-events
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: true

@@ -1,9 +1,9 @@
 ---
 title: Schrödinger 的问题与全局时间线
 description: 从 1931 年的稀有涨落问题出发，用有限粒子模型解释 Schrödinger 问题的统计动机与理论时间线。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 0
@@ -13,7 +13,7 @@ tags:
   - history
   - large-deviations
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

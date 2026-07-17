@@ -1,9 +1,9 @@
 ---
 title: 随机最优控制、Girsanov 与 Föllmer Drift
 description: 从路径相对熵到二次控制能量，梳理 Girsanov、Föllmer drift、HJB 与线性高斯 steering 的边界。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 6
@@ -13,7 +13,7 @@ tags:
   - stochastic-control
   - girsanov
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

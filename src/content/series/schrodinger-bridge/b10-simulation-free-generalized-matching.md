@@ -1,9 +1,9 @@
 ---
 title: Simulation-Free、Generalized Matching 与 IPMF
 description: 比较 simulation-free matching、广义桥匹配和 IPMF，追踪每种方法替换了哪一个投影或采样算子。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 10
@@ -13,7 +13,7 @@ tags:
   - simulation-free
   - ipmf
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

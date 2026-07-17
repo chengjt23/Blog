@@ -1,9 +1,9 @@
 ---
 title: Markov、Reciprocal 与前后向势函数
 description: 澄清 Markov、reciprocal 与 reference bridge mixture 的差别，并建立前后向势函数和双向动力学。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 4
@@ -13,7 +13,7 @@ tags:
   - reciprocal-process
   - markov-process
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

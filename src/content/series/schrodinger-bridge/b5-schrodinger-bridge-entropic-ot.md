@@ -1,9 +1,9 @@
 ---
 title: Schrödinger Bridge 与 Entropic Optimal Transport
 description: 系统比较 Schrödinger Bridge 与熵正则最优传输，分开有限噪声恒等式、动态作用量和零噪声极限。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 5
@@ -13,7 +13,7 @@ tags:
   - optimal-transport
   - entropic-ot
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

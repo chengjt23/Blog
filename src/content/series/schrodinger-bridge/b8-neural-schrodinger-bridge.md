@@ -1,9 +1,9 @@
 ---
 title: 高维神经 Schrödinger Bridge：从 DSB 到 FBSDE
 description: 从经典交替投影进入高维神经方法，比较 DSB、FBSDE 参数化、采样回归与有限网络误差。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 8
@@ -13,7 +13,7 @@ tags:
   - deep-learning
   - fbsde
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

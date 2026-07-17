@@ -3,9 +3,9 @@ title: Bridge Matching、Markovian Projection 与 IMF
 description: >-
   拆解 bridge matching、Markovian projection 与 iterative Markovian
   fitting，明确边缘匹配和路径律投影的差别。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 9
@@ -15,7 +15,7 @@ tags:
   - bridge-matching
   - markovian-projection
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

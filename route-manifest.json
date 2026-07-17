@@ -2,11 +2,11 @@
   "version": 1,
   "series": "schrodinger-bridge",
   "release": {
-    "publishedAt": null,
-    "updatedAt": "2026-07-15",
-    "draft": true,
+    "publishedAt": "2026-07-17",
+    "updatedAt": "2026-07-17",
+    "draft": false,
     "license": "all-rights-reserved",
-    "authors": ["preview-author"]
+    "authors": ["chengjt23"]
   },
   "chapters": [
     {

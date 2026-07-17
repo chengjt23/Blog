@@ -1,9 +1,9 @@
 ---
 title: 扩展：离散、多边缘、Mean-Field 与一般参考过程
 description: 按被替换的假设组织离散、多边缘、非平衡、mean-field、反射边界与一般参考过程扩展。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 11
@@ -13,7 +13,7 @@ tags:
   - multimarginal
   - mean-field
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: true

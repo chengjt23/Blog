@@ -1,9 +1,9 @@
 ---
 title: 经典计算：Fortet、IPF 与 Sinkhorn
 description: 从 Fortet 迭代到 IPF 与 Sinkhorn，解释有限状态精确投影、结构零、可行性和数值稳定化。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 7
@@ -13,7 +13,7 @@ tags:
   - sinkhorn
   - ipf
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

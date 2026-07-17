@@ -1,9 +1,9 @@
 ---
 title: 静态 Schrödinger Problem 与 Schrödinger System
 description: 把路径空间问题约化为端点耦合，并推导 Schrödinger system、势函数与有限矩阵缩放结构。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 3
@@ -13,7 +13,7 @@ tags:
   - schrodinger-system
   - matrix-scaling
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

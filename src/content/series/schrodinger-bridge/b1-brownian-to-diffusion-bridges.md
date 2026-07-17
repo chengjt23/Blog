@@ -1,9 +1,9 @@
 ---
 title: 从 Brownian Bridge 到一般条件扩散
 description: 区分点终点条件化与双边缘优化，从 Brownian bridge 推进到 Doob 变换和一般扩散桥。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 1
@@ -13,7 +13,7 @@ tags:
   - brownian-motion
   - doob-transform
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false

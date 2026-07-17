@@ -3,9 +3,9 @@ title: Schrödinger Bridge、Diffusion 与 Flow Matching 的关系
 description: >-
   以 coupling、path law、marginal path 和回归场四层接口比较 Diffusion、Flow Matching 与
   Schrödinger Bridge。
-publishedAt: null
-updatedAt: '2026-07-15'
-draft: true
+publishedAt: '2026-07-17'
+updatedAt: '2026-07-17'
+draft: false
 type: series-chapter
 series: schrodinger-bridge
 order: 12
@@ -15,7 +15,7 @@ tags:
   - diffusion
   - flow-matching
 authors:
-  - preview-author
+  - chengjt23
 license: all-rights-reserved
 math: true
 mermaid: false
