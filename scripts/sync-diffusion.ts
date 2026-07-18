@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
@@ -78,12 +78,12 @@ const allowlist = await readJson<Allowlist>(
 const routes = await readJson<RouteManifest>(path.join(siteRoot, 'route-manifest.diffusion.json'));
 const bridgeRoutes = await readJson<OtherRouteManifest>(path.join(siteRoot, 'route-manifest.json'));
 
-if (routes.chapters.length !== 14 || allowlist.sources.length !== 14) {
-  throw new Error('Diffusion publication requires exactly 14 declared chapters.');
+if (routes.chapters.length !== 5 || allowlist.sources.length !== 5) {
+  throw new Error('Diffusion publication requires exactly 5 declared chapters.');
 }
-if (allowlist.assets.length !== 56) {
+if (allowlist.assets.length !== 15) {
   throw new Error(
-    `Diffusion publication requires exactly 56 assets, received ${allowlist.assets.length}.`,
+    `Diffusion publication requires exactly 15 assets, received ${allowlist.assets.length}.`,
   );
 }
 
@@ -104,13 +104,10 @@ for (const chapter of routes.chapters) {
   }
 }
 
-const actualAssets = (await readdir(path.join(researchRoot, 'diffusion/assets')))
-  .filter((name) => name.toLowerCase().endsWith('.png'))
-  .map((name) => `diffusion/assets/${name}`)
-  .sort();
-const declaredAssets = [...allowlist.assets].sort();
-if (JSON.stringify(actualAssets) !== JSON.stringify(declaredAssets)) {
-  throw new Error('Diffusion asset allowlist does not exactly match diffusion/assets/*.png.');
+for (const asset of allowlist.assets) {
+  const assetPath = path.join(researchRoot, asset);
+  assertInside(path.join(researchRoot, 'diffusion/assets'), assetPath);
+  await readFile(assetPath);
 }
 
 function stripResearchHeader(source: string): string {
@@ -167,7 +164,7 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
   const tree = unified().use(remarkParse).use(remarkGfm).use(remarkMath).parse(normalized);
 
   visit(tree, 'image', (node) => {
-    if (/^(?:\.\/)?assets\//.test(node.url)) {
+    if (/^(?:\.\/)?assets\//.test(node.url) || /^(?:\.\.\/)+diffusion\/assets\//.test(node.url)) {
       node.url = `/images/diffusion/${path.basename(node.url)}`;
       return;
     }
@@ -189,14 +186,14 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
       return;
     }
 
-    if (cleanUrl.startsWith('../references/notes/sources/')) {
+    if (/^(?:\.\.\/)+references\/notes\/(?:sources|bridge)\//.test(cleanUrl)) {
       pending.push(
         (async () => {
           const notePath = path.resolve(
             path.dirname(path.join(researchRoot, chapter.source)),
             cleanUrl,
           );
-          assertInside(path.join(researchRoot, 'references/notes/sources'), notePath);
+          assertInside(path.join(researchRoot, 'references/notes'), notePath);
           const note = await readFile(notePath, 'utf8');
           const officialUrl = extractOfficialUrl(note);
           if (officialUrl) {
@@ -211,7 +208,7 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
     }
 
     if (
-      cleanUrl.startsWith('../references/') ||
+      /^(?:\.\.\/)+references\//.test(cleanUrl) ||
       cleanUrl.startsWith('./code/') ||
       cleanUrl === '../bridge/OUTLINE.md'
     ) {
@@ -266,7 +263,9 @@ for (const chapter of [...routes.chapters].sort((a, b) => a.order - b.order)) {
   assertInside(contentRoot, outputPath);
   const source = await readFile(sourcePath, 'utf8');
 
-  for (const match of source.matchAll(/!\[[^\]]*\]\((?:\.\/)?assets\/([^)\s]+)[^)]*\)/g)) {
+  for (const match of source.matchAll(
+    /!\[[^\]]*\]\((?:(?:\.\/)?assets\/|(?:\.\.\/)+diffusion\/assets\/)([^)\s]+)[^)]*\)/g,
+  )) {
     const asset = `diffusion/assets/${match[1]}`;
     if (!allowlist.assets.includes(asset)) {
       throw new Error(`${chapter.source}: image is not allowlisted: ${asset}`);
@@ -311,14 +310,54 @@ for (const asset of allowlist.assets) {
 }
 
 if (writeMode) {
+  const expectedContentFiles = new Set(routes.chapters.map((chapter) => `${chapter.slug}.md`));
+  for (const name of await readdir(contentRoot)) {
+    if (!name.endsWith('.md') || expectedContentFiles.has(name)) continue;
+    const stalePath = path.join(contentRoot, name);
+    assertInside(contentRoot, stalePath);
+    await rm(stalePath, { force: true });
+  }
+
+  const expectedAssetFiles = new Set(allowlist.assets.map((asset) => path.basename(asset)));
+  for (const name of await readdir(assetRoot)) {
+    if (expectedAssetFiles.has(name)) continue;
+    const stalePath = path.join(assetRoot, name);
+    assertInside(assetRoot, stalePath);
+    await rm(stalePath, { force: true });
+  }
+
   let existingEntries: GeneratedEntry[] = [];
+  let staleDiffusionEntries: GeneratedEntry[] = [];
   try {
     const existing = await readJson<GeneratedManifest>(
       path.join(siteRoot, 'generated-manifest.json'),
     );
-    existingEntries = existing.entries.filter((entry) => !entry.source.startsWith('diffusion/'));
+    staleDiffusionEntries = existing.entries.filter(
+      (entry) =>
+        entry.output.startsWith('src/content/series/diffusion/') ||
+        entry.output.startsWith('public/images/diffusion/'),
+    );
+    existingEntries = existing.entries.filter(
+      (entry) =>
+        !entry.output.startsWith('src/content/series/diffusion/') &&
+        !entry.output.startsWith('public/images/diffusion/'),
+    );
   } catch {
     existingEntries = [];
+  }
+
+  const currentOutputs = new Set(generated.map((entry) => entry.output));
+  for (const stale of staleDiffusionEntries) {
+    if (currentOutputs.has(stale.output)) continue;
+    const stalePath = path.join(siteRoot, stale.output);
+    if (stale.output.startsWith('src/content/series/diffusion/')) {
+      assertInside(contentRoot, stalePath);
+    } else if (stale.output.startsWith('public/images/diffusion/')) {
+      assertInside(assetRoot, stalePath);
+    } else {
+      continue;
+    }
+    await rm(stalePath, { force: true });
   }
 
   const entries = [...existingEntries, ...generated];

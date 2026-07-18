@@ -1,7 +1,7 @@
 # Implementation Status
 
-> State: `github_pages_bridge_diffusion_v1_live`
-> Date: 2026-07-17
+> State: `diffusion_five_chapter_consolidation`
+> Date: 2026-07-19
 
 ## Completed
 
@@ -10,10 +10,10 @@
 - Conservative allowlist/denylist and explicit dry-run/write sync modes.
 - Markdown AST transformation for 15 Bridge chapters.
 - Schrödinger Bridge B0-B14 is published as formal release v1.0 with `publishedAt` and `updatedAt` set to 2026-07-17.
-- Markdown AST transformation for 14 Diffusion chapters, including public math-delimiter normalization and conservative research-link removal.
-- Diffusion D0-D13 is published as formal release v1.0 with `publishedAt` and `updatedAt` set to 2026-07-17.
-- Relative source/output SHA-256 manifest with 97 generated entries across both Blogs.
-- 68 original figures with stable dimensions, alt text, captions, and automatic PNG dimension detection.
+- Markdown AST transformation for the consolidated five-chapter Diffusion Blog, including public math-delimiter normalization and conservative research-link removal.
+- Diffusion D1-D5 is the only published Diffusion release; D0 and the previous D6-D13 publication routes and generated content are removed.
+- Relative source/output SHA-256 manifest covers both Blogs and only the currently published Diffusion assets.
+- Published figures have stable dimensions, alt text, captions, and automatic PNG dimension detection.
 - Internal status removal and source-note official URL mapping.
 - Core KaTeX conversion in B0, B2, B3, B5, B6, B9, and B12.
 - Mermaid rendering with no-JavaScript text fallback in B11 and B13.
@@ -32,14 +32,14 @@
 - `astro check`: 0 errors, 0 warnings, 0 hints.
 - ESLint and Prettier: pass.
 - Vitest: 7 tests pass.
-- Static build: 37 content pages plus 33 compatibility redirects generated.
-- Pagefind: 33 approved content pages indexed.
-- Generated HTML audit: 37 content pages and 33 redirects pass links, redirect targets, H1, images, robots, and leakage checks.
+- Static build: 28 content pages plus 24 compatibility redirects generated.
+- Pagefind: 24 approved content pages indexed.
+- Generated HTML audit: 28 content pages and 24 redirects pass links, redirect targets, H1, images, robots, and leakage checks.
 - Playwright: 6 tests pass for empty Home, both direct Blog entries, Diffusion math/images/navigation, desktop/mobile navigation, system dark mode, Mermaid, and Pagefind.
 - GitHub Pages public-beta build and all 6 Playwright tests pass under `/Blog/`.
 - GitHub Actions build and deploy jobs pass for Bridge v1.0 commit `36e089a` in run `29560298779`.
 - GitHub Actions build and deploy jobs pass for Diffusion v1.0 commit `b6c8e5b` in run `29564516973`.
-- Online smoke passes for Home, Blog, both direct topic-title entries, all 29 chapters, formal v1.0 metadata, images, KaTeX, Pagefind, RSS, mobile navigation, and zero horizontal overflow.
+- Local smoke passes for Home, Blog, both direct topic-title entries, all 20 published chapters, formal v1.0 metadata, images, KaTeX, Pagefind, RSS, mobile navigation, and zero horizontal overflow.
 - Screenshots: `artifacts/qa/`.
 
 ## Required User Gate

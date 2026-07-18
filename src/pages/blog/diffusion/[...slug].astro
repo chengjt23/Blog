@@ -46,7 +46,7 @@ const jsonLd = {
 <BaseLayout
   title={`D${entry.data.order}. ${entry.data.title}`}
   description={entry.data.description}
-  image="/images/diffusion/d0_problem_solution_map.png"
+  image="/images/diffusion/d1_forward_marginals.png"
   hasMermaid={entry.data.mermaid}
   type="article"
   jsonLd={jsonLd}
@@ -61,7 +61,7 @@ const jsonLd = {
 
     <article class="chapter-main">
       <details class="mobile-series-nav" data-pagefind-ignore>
-        <summary>D{entry.data.order} / 14 · 展开 Blog 目录</summary>
+        <summary>D{entry.data.order} / {chapters.length} · 展开 Blog 目录</summary>
         <SeriesNav chapters={chapters} currentSlug={entry.data.slug} prefix="D" />
       </details>
 

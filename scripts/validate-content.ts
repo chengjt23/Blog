@@ -15,13 +15,25 @@ type GeneratedManifest = {
 };
 
 type Denylist = { contentPatterns: string[] };
+type Allowlist = { sources: string[]; assets: string[] };
 
 const siteRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const manifest = await readJson<GeneratedManifest>(path.join(siteRoot, 'generated-manifest.json'));
 const denylist = await readJson<Denylist>(path.join(siteRoot, 'publish-denylist.json'));
+const bridgeAllowlist = await readJson<Allowlist>(path.join(siteRoot, 'content-allowlist.json'));
+const diffusionAllowlist = await readJson<Allowlist>(
+  path.join(siteRoot, 'content-allowlist.diffusion.json'),
+);
+const expectedEntries =
+  bridgeAllowlist.sources.length +
+  bridgeAllowlist.assets.length +
+  diffusionAllowlist.sources.length +
+  diffusionAllowlist.assets.length;
 
-if (manifest.entries.length !== 97) {
-  throw new Error(`Expected 97 generated entries, received ${manifest.entries.length}.`);
+if (manifest.entries.length !== expectedEntries) {
+  throw new Error(
+    `Expected ${expectedEntries} generated entries from the publication allowlists, received ${manifest.entries.length}.`,
+  );
 }
 
 const outputSet = new Set<string>();

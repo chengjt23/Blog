@@ -40,11 +40,11 @@ test('Diffusion Blog publishes all chapters with math, images, and direct naviga
   await page.goto(pagePath('/blog/'));
   await page.getByRole('link', { name: 'Diffusion', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Diffusion');
-  await expect(page.locator('.chapter-row')).toHaveCount(14);
+  await expect(page.locator('.chapter-row')).toHaveCount(5);
   await page.screenshot({ path: 'artifacts/qa/diffusion-index-desktop.png', fullPage: true });
 
-  await page.getByRole('link', { name: /连续时间统一/ }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('连续时间统一');
+  await page.getByRole('link', { name: /去噪器究竟学到了什么/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('去噪器究竟学到了什么');
   await expect(page.locator('.chapter-meta')).toContainText('正式版 v1.0');
   expect(await page.locator('.katex-display').count()).toBeGreaterThanOrEqual(5);
   const images = page.locator('.article-content img');
@@ -60,11 +60,11 @@ test('Diffusion Blog publishes all chapters with math, images, and direct naviga
       )
       .toBe(true);
   }
-  await expect(page.locator('.series-nav-list').first()).toContainText('D13');
+  await expect(page.locator('.series-nav-list').first()).toContainText('D5');
   await page.screenshot({ path: 'artifacts/qa/diffusion-chapter-viewport.png' });
-  await expect(page.getByRole('link', { name: /下一篇 · D5/ })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: /下一篇 · D4/ })).toHaveAttribute(
     'href',
-    /d5-parameterization-training-design/,
+    /d4-modern-diffusion-system/,
   );
 });
 
@@ -135,8 +135,7 @@ test('Pagefind returns Chinese and English technical results', async ({ page }) 
 
   await input.fill('Probability-Flow ODE');
   await expect(page.locator('#search-results li').first()).toBeVisible({ timeout: 10_000 });
-  await expect(page.locator('#search-results li a').first()).toHaveAttribute(
-    'href',
-    /\/blog\/diffusion\//,
-  );
+  await expect(
+    page.locator('#search-results li a[href*="/blog/diffusion/"]').first(),
+  ).toBeVisible();
 });

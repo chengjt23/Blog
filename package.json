@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "npm run validate-env && tsx scripts/generate-headers.ts",
+    "prebuild": "tsx scripts/clean-dist.ts && npm run validate-env && tsx scripts/generate-headers.ts",
     "build": "astro build && pagefind --site dist",
     "postbuild": "tsx scripts/check-build.ts",
     "preview": "astro preview",

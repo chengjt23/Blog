@@ -1,8 +1,8 @@
 ---
-title: 前向扩散：如何系统地破坏数据
-description: 从离散 Gaussian Markov chain 推导任意时刻边缘、噪声日程、信噪比与终点近似条件。
+title: 为什么生成模型要先学会毁掉数据
+description: 沿 2015—2024 年的论文演进，解释前向扩散、直接加噪、SNR 与 noise schedule 为什么让生成问题变得可学习。
 publishedAt: '2026-07-17'
-updatedAt: '2026-07-17'
+updatedAt: '2026-07-19'
 draft: false
 type: series-chapter
 series: diffusion
@@ -18,1051 +18,375 @@ license: all-rights-reserved
 math: true
 mermaid: false
 toc: true
-featured: false
+featured: true
 includeInFeed: false
 indexable: true
-scope: 聚焦前向加噪过程、直接采样公式、schedule 与 terminal SNR，不讨论逆过程训练。
+scope: 聚焦已知前向破坏过程如何制造多噪声尺度的训练问题，并明确已知 forward transition 不等于已知 reverse transition。
 ---
-生成模型最终要做的是从简单噪声出发，得到复杂数据。但 Diffusion 的第一步偏偏反着来：从真实数据出发，主动把结构破坏掉。
+今天谈到 Diffusion，人们很容易从 2020 年的 DDPM 开始：给图像加噪，让网络预测噪声，再从 Gaussian noise 一步步生成图像。但这会漏掉一个更有意思的问题：
 
-这个方向看起来有些绕。既然目标是生成图像，为什么先研究怎样毁掉图像？为什么不直接训练一个从 Gaussian noise 到数据的映射？又为什么要分成成百上千步，而不是一次加入足够大的噪声？
+> 为什么研究者会想到，先设计一条“毁掉数据”的路径，反而能够解决生成问题？
 
-答案不是“加噪本身很强”，而是**一个设计得当的破坏过程，可以把原本未知的生成问题改造成一系列有监督、可计算的局部逆问题**。前向过程的职责是为这些逆问题规定路径、难度和监督信号。本章只研究路径的前向一侧；下一章再利用它推导 reverse process 和训练目标。
+这个想法并不是突然出现的。2015 年，Sohl-Dickstein 等人在 ICML 论文 [*Deep Unsupervised Learning using Nonequilibrium Thermodynamics*](https://arxiv.org/abs/1503.03585 "官方论文页面") 中建立了 diffusion probabilistic model 的基本框架；2020 年，Ho、Jain 和 Abbeel 在 NeurIPS 论文 [*Denoising Diffusion Probabilistic Models*](https://arxiv.org/abs/2006.11239 "官方论文页面") 中把它变成了真正有竞争力的图像生成方法；此后 2021 年的 Improved DDPM 与 VDM、2022 年的 EDM、2024 年关于 terminal SNR 的修正，又不断回答同一个问题：**数据究竟应该怎样被破坏，才能让逆向学习既有效又稳定？**
 
-读完本章后，我们应当能够回答：
+本章沿着这条历史线索，只讨论前向过程。核心不是记住一组噪声参数及其公式，而是理解每次改动在解决什么问题。
 
-1. forward Markov chain 到底定义了哪些随机对象；
-2. 为什么 $q(x_t\mid x_0)$ 可以不经过前面 $t-1$ 步而直接采样；
-3. $\beta_t,\alpha_t,\bar\alpha_t$ 分别控制什么；
-4. 为什么 timestep $t$ 不是比较噪声强度的最佳坐标；
-5. linear、cosine、log-SNR 和 zero-terminal-SNR 分别在解决什么问题；
-6. 为什么 training noise distribution、loss weighting 和 sampling grid 不能全都叫作“noise schedule”。
+## 1. 2015：从非平衡热力学借来一条生成路径
 
-***
+2015 年的生成建模面临一个长期矛盾：简单分布容易采样和计算，却无法描述真实数据；足够灵活的分布虽然表达能力强，却经常伴随困难的归一化、推断或采样。Sohl-Dickstein 等人在 ICML 2015 论文中把这个问题概括为生成模型的**灵活性与可计算性冲突**。
 
-## 1. 为什么不能一次把数据变成噪声
+他们借用了非平衡统计物理中“系统逐渐走向平衡态”的语言。这里的借用需要准确理解：统计物理没有直接给出神经生成模型的训练算法，它提供的是一种构造思路——不要试图一步把简单分布变成复杂数据，而是先定义一条容易分析的渐进过程。
 
-设数据为 $x_0\sim q_{\mathrm{data}}$。最直接的破坏方式是
+论文规定一条固定的 forward Markov chain。设数据位于 $d$ 维空间，$X_0$ 表示从真实数据分布中抽到的干净样本，$X_t$ 表示经过 $t$ 次加噪后的随机变量，$T$ 是总加噪步数。本文用大写 $X_t$ 表示随机变量，用小写 $x_t$ 表示它的一个具体取值。
+
+记 $q$ 为这条人为规定的前向过程所诱导的概率分布，$q_{\mathrm{data}}$ 为未知的真实数据分布。Markov 假设表示：给定当前状态 $X_{t-1}$ 后，下一状态 $X_t$ 不再依赖更早的状态。于是整条前向路径的联合密度可以分解为
 
 $$
-x_1=\epsilon,\qquad \epsilon\sim\mathcal N(0,I).
+q(x_{0:T})
+=q_{\mathrm{data}}(x_0)
+\prod_{t=1}^{T}q(x_t\mid x_{t-1}).
 $$
 
-它确实一步得到了简单分布，但也一步丢掉了 $x_0$ 的全部信息。此时若要求模型从 $x_1$ 恢复 $x_0$，由于 $x_1$ 与 $x_0$ 独立，模型面对的仍是原始任务：从随机数直接生成整个数据分布。前向过程没有为学习提供任何额外结构。
+这里 $x_{0:T}$ 是整条轨迹 $(x_0,x_1,\ldots,x_T)$ 的简写，而 $q(x_t\mid x_{t-1})$ 是第 $t$ 步的 transition density。
 
-更有用的做法是把破坏拆成许多小步：
-
-$$
-x_0\longrightarrow x_1\longrightarrow\cdots\longrightarrow x_T.
-$$
-
-每一步只加入少量噪声，于是相邻状态高度相关。逆转 $x_t\to x_{t-1}$ 通常比一步完成 $\epsilon\to x_0$ 更局部。Sohl-Dickstein et al. 在 2015 年把这种 nonequilibrium forward diffusion、learned reverse process 和可计算的路径变分下界组合成现代 diffusion probabilistic model 的基本框架；DDPM 并不是第一次提出 diffusion model，而是在 2020 年找到了一套更有效的参数化和训练方式（Sohl-Dickstein et al., 2015, Secs. 1--2；Ho et al., 2020, Secs. 2--3）。
-
-这里要避免一个常见误解：
-
-> 小步加噪不会自动让无条件逆分布 $q(x_{t-1}\mid x_t)$ 变得已知。它真正提供的是一个已知的 forward path，以及训练时可利用真实 $x_0$ 构造的解析 posterior $q(x_{t-1}\mid x_t,x_0)$。后者在 [D2](/blog/diffusion/d2-ddpm-objective/) 中完整推导。
-
-因此，前向过程不是生成算法本身，也不需要神经网络。它是我们人为选择的 inference/corruption process，用来定义学习问题。
-
-***
-
-## 2. 先分清四种对象
-
-在写公式之前，先区分四个经常被混为一谈的对象。
-
-### 2.1 一条随机轨迹
-
-固定一个数据点 $x_0$，逐步抽取独立噪声，得到
-
-$$
-(x_0,x_1,\ldots,x_T).
-$$
-
-这是 forward chain 的一次 realization。换一组噪声，即使起点相同，也会得到另一条轨迹。
-
-### 2.2 一步条件分布
-
-$$
-q(x_t\mid x_{t-1})
-$$
-
-描述已知前一状态时，下一步如何随机变化。它是 Markov chain 的 transition kernel。
-
-### 2.3 给定原始数据的时刻边缘
-
-$$
-q(x_t\mid x_0)
-$$
-
-把中间状态 $x_1,\ldots,x_{t-1}$ 积分掉，只问“从这个 $x_0$ 出发，到时刻 $t$ 会在哪里”。DDPM 的高效训练依赖这个量可以直接采样。
-
-### 2.4 整个数据分布在时刻 $t$ 的边缘
-
-$$
-q_t(x_t)
-=\int q(x_t\mid x_0)q_{\mathrm{data}}(x_0)\,dx_0.
-$$
-
-这是所有数据点经过 forward corruption 后形成的总体分布。即使 $q(x_t\mid x_0)$ 是 Gaussian，$q_t(x_t)$ 一般仍不是单个 Gaussian；它是缩放后的数据分布与 Gaussian kernel 的卷积。
-
-这四者的差别会贯穿整个教程。尤其不能因为每个 conditional 是 Gaussian，就断言中间的 data marginal 也是 Gaussian。
-
-***
-
-## 3. DDPM 的 Gaussian forward Markov chain
-
-DDPM 采用离散时间 $t=1,\ldots,T$，定义
-
-$$
-q(x_{1:T}\mid x_0)
-=\prod_{t=1}^{T}q(x_t\mid x_{t-1}),
-$$
-
-其中
+在 Gaussian 情形下，Sohl-Dickstein et al. 2015 的 Appendix Table 1 使用
 
 $$
 \boxed{
 q(x_t\mid x_{t-1})
 =\mathcal N\!\left(
-x_t;\sqrt{1-\beta_t}\,x_{t-1},\beta_t I
-\right).
+\sqrt{1-\beta_t}\,x_{t-1},
+\beta_t I
+\right),
 }
 $$
 
-$\beta_t\in(0,1)$ 是第 $t$ 步加入的 variance。为了简化后续表达，定义
+其中，$\mathcal N(\mu,\Sigma)$ 表示均值为 $\mu$、协方差为 $\Sigma$ 的 Gaussian 分布，$I$ 是 $d\times d$ 单位矩阵；$\beta_t\in(0,1)$ 是第 $t$ 步加入的噪声方差。由于协方差是 $\beta_t I$，每个坐标在这一步加入相同强度且彼此独立的噪声。
+
+从这个条件分布采样，等价于写成
+
+$$
+X_t
+=\sqrt{1-\beta_t}\,X_{t-1}
++\sqrt{\beta_t}\,\varepsilon_t,
+\qquad
+\varepsilon_t\overset{\mathrm{iid}}{\sim}\mathcal N(0,I),
+$$
+
+其中 $\varepsilon_t$ 是第 $t$ 步新采样的标准 Gaussian noise，$\mathrm{iid}$ 表示不同时间步的噪声相互独立且同分布。第一项保留上一时刻的信号，第二项加入新噪声。
+
+平方根保证 signal 与 noise 按**方差**相加：如果 $X_{t-1}\sim\mathcal N(0,I)$，那么 $X_t$ 的协方差为
+
+$$
+(1-\beta_t)I+\beta_t I=I.
+$$
+
+所以 $X_t$ 仍服从 $\mathcal N(0,I)$，标准 Gaussian 因而是这条链的平稳分布。
+
+为什么不直接令 $X_1=\varepsilon$，一步把数据变成噪声？因为这样会立即切断输入与数据的全部联系。给定 $\varepsilon$ 后恢复 $X_0$，仍然是原来的无条件生成问题。2015 年论文的关键判断是：把破坏拆成许多小步后，相邻状态仍高度相关，困难的全局生成可以被重新组织为许多局部逆转。
+
+但早期 diffusion model 并没有因此立即流行。它的 reverse chain 很长，样本质量也尚未显示出压倒性优势。更重要的是，“小步逆过程可以用简单分布族逼近”并不表示任意有限步的真实
+
+$$
+q(x_{t-1}\mid x_t)
+$$
+
+都自动成为已知 Gaussian；它仍然依赖未知的数据边缘分布。2015 年解决的是“怎样规定一条可训练的路径”，还没有完全解决“网络应当以什么目标学习逆转”。
+
+## 2. 2020：DDPM 把前向路径变成了训练数据生成器
+
+五年后，Ho、Jain 和 Abbeel 在 NeurIPS 2020 的 DDPM 论文中沿用了同一类 Gaussian forward chain，却重新组织了参数化、训练目标和网络系统。DDPM 的历史意义不是第一次提出 diffusion，而是证明这套框架能够生成当时具有竞争力的高质量图像。
+
+对前向过程而言，DDPM 最重要的计算接口是论文 Eq. (4)：任意时刻的带噪样本都可以直接从 $x_0$ 构造，不必真的执行前面 $t$ 次转移。
+
+为了描述多步累积效果，DDPM 沿用 2020 年论文的记号，定义
 
 $$
 \alpha_t=1-\beta_t,
 \qquad
-\bar\alpha_t=\prod_{s=1}^{t}\alpha_s,
-\qquad
-\bar\alpha_0=1.
+\bar\alpha_t=\prod_{s=1}^{t}\alpha_s.
 $$
 
-于是一步采样可以写成 reparameterized form：
+其中，$\alpha_t$ 是第 $t$ 步保留的 signal power 比例；$\bar\alpha_t$ 是从第 1 步到第 $t$ 步累计保留的 signal power。横线不是平均号，而表示时间上的累积乘积。
+
+下面用归纳法推导任意时刻的分布。假设在 $t-1$ 时刻可以写成
 
 $$
-\boxed{
-x_t=\sqrt{\alpha_t}x_{t-1}+\sqrt{\beta_t}\epsilon_t,
-\qquad
-\epsilon_t\overset{\mathrm{iid}}\sim\mathcal N(0,I).
-}
+X_{t-1}
+=\sqrt{\bar\alpha_{t-1}}X_0
++\sqrt{1-\bar\alpha_{t-1}}\,\varepsilon',
 $$
 
-### 3.1 为什么 signal 前面是平方根
-
-假设某个时刻已经有 $x_{t-1}\sim\mathcal N(0,I)$。由于两个 Gaussian 独立，
+其中 $\varepsilon'\sim\mathcal N(0,I)$，并且与第 $t$ 步新加入的 $\varepsilon_t$ 独立。将它代入第 $t$ 步后，$X_0$ 前的 signal amplitude 变为
 
 $$
-\operatorname{Cov}(x_t)
-=\alpha_t I+\beta_t I
-=(\alpha_t+\beta_t)I
-=I.
+\sqrt{\alpha_t\bar\alpha_{t-1}}
+=\sqrt{\bar\alpha_t},
 $$
 
-因此 $\mathcal N(0,I)$ 是每个 transition 的 invariant distribution。平方根保证的是**方差**按 $\alpha_t$ 与 $\beta_t$ 相加，而不是 amplitude 直接相加。
-
-这并不意味着任意数据经过一步就变成标准 Gaussian。它只说明：标准 Gaussian 一旦到达，就会被该 kernel 保持；从复杂数据出发时，反复应用 kernel 才会逐渐忘记初始结构。
-
-### 3.2 $\beta_t$、$\alpha_t$ 与 $\bar\alpha_t$ 的职责
-
-| 记号                                    | 含义                                 | 作用范围                |
-| ------------------------------------- | ---------------------------------- | ------------------- |
-| $\beta_t$                             | 第 $t$ 步加入的噪声方差                     | one-step transition |
-| $\alpha_t=1-\beta_t$                  | 第 $t$ 步保留的 signal power 比例         | one-step transition |
-| $\bar\alpha_t=\prod_{s\le t}\alpha_s$ | 从 $x_0$ 到 $x_t$ 累积保留的 signal power | endpoint marginal   |
-| $\sqrt{\bar\alpha_t}$                 | 原始样本的 amplitude 系数                 | $q(x_t\mid x_0)$    |
-| $1-\bar\alpha_t$                      | 累积噪声方差                             | $q(x_t\mid x_0)$    |
-
-“linear schedule”如果指 $\beta_t$ 线性，并不表示 $\bar\alpha_t$、SNR 或 log-SNR 线性。许多 schedule 争论的混乱就来自没有说明“到底是哪一个量随时间怎样变化”。
-
-***
-
-## 4. 核心推导：任意时刻为何可以直接采样
-
-我们现在完整推导
+而两项独立 Gaussian noise 的方差可以直接相加，总方差为
 
 $$
-q(x_t\mid x_0)
-=\mathcal N\!\left(
-\sqrt{\bar\alpha_t}x_0,(1-\bar\alpha_t)I
-\right).
-$$
-
-这是 D1 的核心结论，也是 DDPM 训练不必真的模拟 $t$ 次 forward steps 的原因。Ho et al. 将其写在 DDPM Eq. (4)（PDF p. 2）。
-
-### 4.1 先展开两步
-
-第一步：
-
-$$
-x_1=\sqrt{\alpha_1}x_0+\sqrt{\beta_1}\epsilon_1.
-$$
-
-第二步：
-
-$$
-\begin{aligned}
-x_2
-&=\sqrt{\alpha_2}x_1+\sqrt{\beta_2}\epsilon_2\\
-&=\sqrt{\alpha_2\alpha_1}x_0
-+\sqrt{\alpha_2\beta_1}\epsilon_1
-+\sqrt{\beta_2}\epsilon_2.
-\end{aligned}
-$$
-
-后两项是独立零均值 Gaussian，其总方差为
-
-$$
-\alpha_2\beta_1+\beta_2
-=\alpha_2(1-\alpha_1)+(1-\alpha_2)
-=1-\alpha_1\alpha_2.
-$$
-
-所以它们可以合并成一个标准 Gaussian $\epsilon$：
-
-$$
-x_2
-=\sqrt{\alpha_1\alpha_2}x_0
-+\sqrt{1-\alpha_1\alpha_2}\epsilon.
-$$
-
-两步的形式已经暗示了结论。
-
-### 4.2 归纳证明
-
-假设在 $t-1$ 时刻
-
-$$
-x_{t-1}
-=\sqrt{\bar\alpha_{t-1}}x_0
-+\sqrt{1-\bar\alpha_{t-1}}\epsilon',
-$$
-
-其中 $\epsilon'\sim\mathcal N(0,I)$。代入第 $t$ 步：
-
-$$
-\begin{aligned}
-x_t
-&=\sqrt{\alpha_t}x_{t-1}+\sqrt{\beta_t}\epsilon_t\\
-&=\sqrt{\alpha_t\bar\alpha_{t-1}}x_0
-+\sqrt{\alpha_t(1-\bar\alpha_{t-1})}\epsilon'
-+\sqrt{\beta_t}\epsilon_t.
-\end{aligned}
-$$
-
-signal 系数满足
-
-$$
-\alpha_t\bar\alpha_{t-1}=\bar\alpha_t.
-$$
-
-两项独立噪声的总方差满足
-
-$$
-\begin{aligned}
-\alpha_t(1-\bar\alpha_{t-1})+\beta_t
-&=\alpha_t-\bar\alpha_t+1-\alpha_t\\
-&=1-\bar\alpha_t.
-\end{aligned}
-$$
-
-因此
-
-$$
-\boxed{
-x_t
-=\sqrt{\bar\alpha_t}x_0
-+\sqrt{1-\bar\alpha_t}\epsilon,
-\qquad \epsilon\sim\mathcal N(0,I).
-}
-$$
-
-也即
-
-$$
-\boxed{
-q(x_t\mid x_0)
-=\mathcal N\!\left(
-x_t;\sqrt{\bar\alpha_t}x_0,(1-\bar\alpha_t)I
-\right).
-}
-$$
-
-### 4.3 从整条路径看方差为什么恰好望远镜消去
-
-把递归完全展开：
-
-$$
-x_t
-=\sqrt{\bar\alpha_t}x_0
-+\sum_{s=1}^{t}
-\sqrt{\beta_s\prod_{j=s+1}^{t}\alpha_j}\epsilon_s.
-$$
-
-噪声总方差系数为
-
-$$
-\sum_{s=1}^{t}
-\beta_s\prod_{j=s+1}^{t}\alpha_j.
-$$
-
-利用 $\beta_s=1-\alpha_s$，第 $s$ 项可以写成
-
-$$
-(1-\alpha_s)\prod_{j=s+1}^{t}\alpha_j
-=\prod_{j=s+1}^{t}\alpha_j
--\prod_{j=s}^{t}\alpha_j.
-$$
-
-求和后中间项全部抵消，只剩
-
-$$
-1-\prod_{j=1}^{t}\alpha_j
+\alpha_t(1-\bar\alpha_{t-1})+(1-\alpha_t)
 =1-\bar\alpha_t.
 $$
 
-这说明 closed form 不是近似，也不是“因为 $T$ 很大”才成立；对任意合法的离散 $\beta_{1:t}$，它都是精确恒等式。
-
-### 4.4 任意两个时刻之间的 transition
-
-相同推导还给出 $0\le s<t\le T$ 时
+因此得到 DDPM 2020 Eq. (4)：
 
 $$
 \boxed{
-q(x_t\mid x_s)
+q(x_t\mid x_0)
 =\mathcal N\!\left(
-\sqrt{\frac{\bar\alpha_t}{\bar\alpha_s}}x_s,
-\left(1-\frac{\bar\alpha_t}{\bar\alpha_s}\right)I
+\sqrt{\bar\alpha_t}x_0,
+(1-\bar\alpha_t)I
 \right),
 }
 $$
 
-前提是 $\bar\alpha_s>0$。这说明相邻一步并不特殊：只要知道累计 signal ratio，就能把多个 forward steps 合成一个 Gaussian transition。
+这个条件分布说明：给定干净样本 $x_0$ 后，$X_t$ 的条件均值是 $\sqrt{\bar\alpha_t}x_0$，条件协方差是 $(1-\bar\alpha_t)I$。前者衡量还剩多少原始信号，后者衡量已经累积了多少噪声。
 
-***
-
-## 5. 直接边缘采样不等于采样一条 Markov 轨迹
-
-closed form 允许我们为随机训练时刻 $t$ 直接构造 $x_t$：
+用 reparameterization 写成可直接计算的形式，就是
 
 $$
-x_t=\sqrt{\bar\alpha_t}x_0+\sqrt{1-\bar\alpha_t}\epsilon.
-$$
-
-但这里有一个很容易被可视化代码掩盖的区别。
-
-若对多个时刻重复使用同一个 $\epsilon$，每个单独的 $x_t$ 都具有正确的 $q(x_t\mid x_0)$，但联合分布
-
-$$
-(x_{t_1},x_{t_2},\ldots)\mid x_0
-$$
-
-一般不是原始 Markov chain 的联合分布。它只是一个方便观察“同一个 signal 如何随 noise level 变化”的 coupling。要得到真实 forward trajectory，需要逐步采样独立 $\epsilon_t$，或者按上一节的 $q(x_t\mid x_s)$ 继续采样。
-
-这个差异可以直接从 conditional cross-time covariance 看见。固定 $x_0$，若 $s<t$ 且两个时刻复用同一个 $\epsilon$，则
-
-$$
-\operatorname{Cov}_{\mathrm{shared}\ \epsilon}(X_s,X_t\mid x_0)
-=\sqrt{(1-\bar\alpha_s)(1-\bar\alpha_t)}I.
-$$
-
-对真实 Markov path，由
-
-$$
+\boxed{
 X_t
-=\sqrt{\frac{\bar\alpha_t}{\bar\alpha_s}}X_s
-+\sqrt{1-\frac{\bar\alpha_t}{\bar\alpha_s}}\eta,
-\qquad \eta\perp X_s,
-$$
-
-可得
-
-$$
-\operatorname{Cov}_{\mathrm{Markov}}(X_s,X_t\mid x_0)
-=\sqrt{\frac{\bar\alpha_t}{\bar\alpha_s}}
-(1-\bar\alpha_s)I.
-$$
-
-两者一般不相等。这是“每个 marginal 都对，但 joint law 不对”的一个明确反例。
-
-下面的图为了让同一批二维点可追踪，故意在各时刻复用了同一组 noise。每个面板的 marginal 正确，但整组面板不应被解释成真实 Markov trajectories。
-
-![二维八峰分布在 cosine forward process 下的直接边缘](/images/diffusion/d1_forward_marginals.png)
-
-图中的颜色只标记原始 mode，不是模型在 noisy state 中可见的标签。到末端，各颜色已经混合，整体接近标准 Gaussian。
-
-***
-
-## 6. “数据变成 Gaussian”究竟是什么意思
-
-### 6.1 条件分布的极限
-
-由 closed form，
-
-$$
-q(x_T\mid x_0)
-=\mathcal N\!\left(
-\sqrt{\bar\alpha_T}x_0,(1-\bar\alpha_T)I
-\right).
-$$
-
-若 $\bar\alpha_T\to0$，则
-
-$$
-\sqrt{\bar\alpha_T}x_0\to0,
+=\sqrt{\bar\alpha_t}X_0
++\sqrt{1-\bar\alpha_t}\,\varepsilon,
 \qquad
-1-\bar\alpha_T\to1,
+\varepsilon\sim\mathcal N(0,I).
+}
 $$
 
-所以 conditional 趋近 $\mathcal N(0,I)$。若 $X_0$ 是几乎处处有限的随机向量，那么
+这里的 $\varepsilon$ 是把前 $t$ 步所有独立噪声合并后得到的一份标准 Gaussian noise；它不是某一个固定时间步的 $\varepsilon_t$。
+
+这条公式改变了训练方式。一次训练样本的构造可以完全写成四个随机变量：
 
 $$
-X_T
-=\sqrt{\bar\alpha_T}X_0
-+\sqrt{1-\bar\alpha_T}\epsilon
-\xrightarrow{d}\epsilon
+\begin{aligned}
+X_0 &\sim q_{\mathrm{data}},\\
+t &\sim \operatorname{Uniform}\{1,\ldots,T\},\\
+\varepsilon &\sim \mathcal N(0,I),\\
+X_t &=\sqrt{\bar\alpha_t}X_0
+      +\sqrt{1-\bar\alpha_t}\,\varepsilon.
+\end{aligned}
 $$
 
-可直接由 Slutsky theorem 得到。这里不需要假设原始数据是 Gaussian。
+第一行从数据集采样干净样本；第二行选择本次训练使用的噪声时刻；第三行采样独立噪声；第四行直接得到对应的带噪样本。这里的 uniform time sampling 是 DDPM 2020 的训练选择，不是前向扩散公式本身强制要求的唯一方案。
 
-### 6.2 有限时刻的 aggregate marginal 通常不是 Gaussian
+模型由此可以在一次训练中看到同一数据分布的许多破坏程度。前向过程不再只是一个物理类比，而成为一台可以无限制造 $(x_0,x_t,\varepsilon)$ 训练样本的机器。
 
-对有限 $\bar\alpha_t>0$，
+这也是 DDPM 与“一次从噪声映射到图像”的根本差别：它人为规定了数据与噪声之间的中间状态，使网络可以在不同信息尺度上接受监督。2020 年论文随后利用可解析的 $q(x_{t-1}\mid x_t,x_0)$，把逆过程训练转化为 noise-prediction regression；那是下一章的主题。
 
-$$
-q_t
-=\operatorname{Law}
-\left(\sqrt{\bar\alpha_t}X_0+\sqrt{1-\bar\alpha_t}\epsilon\right).
-$$
+## 3. “数据变成 Gaussian”究竟是什么意思
 
-若 $q_{\mathrm{data}}$ 是多峰分布，$q_t$ 就是每个 mode 缩向原点并被 Gaussian 平滑后的混合分布。只有当 $X_0$ 本来就是 Gaussian，或 signal coefficient 精确为 0 时，它才必然是单个 Gaussian。
+DDPM 之后，许多介绍会把前向过程简写成一句“不断加噪，最后数据变成标准 Gaussian”。这句话源自 2015 与 2020 年论文采用的 Gaussian chain，但如果不区分条件分布与整体边缘，就会把近似写成错误的等号。
 
-### 6.3 均值和协方差怎样变化
-
-设数据均值和协方差分别为 $\mu_0,\Sigma_0$，并假设噪声独立，则
-
-$$
-\mathbb E[X_t]=\sqrt{\bar\alpha_t}\mu_0,
-$$
-
-$$
-\operatorname{Cov}(X_t)
-=\bar\alpha_t\Sigma_0+(1-\bar\alpha_t)I.
-$$
-
-因此均值被压向 0，协方差被推向 $I$。但只检查前两阶矩还不足以证明整个分布 Gaussian；多峰性、高阶矩和其他非 Gaussian 结构也必须逐渐消失。
-
-### 6.4 分布看起来不变，也可能仍保留信息
-
-考虑一个特殊例子：若 $X_0\sim\mathcal N(0,I)$，则所有 $X_t$ 的 marginal 都是 $\mathcal N(0,I)$。只看直方图，我们会以为 forward process 什么都没做；但 $X_t$ 与 $X_0$ 的相关性仍在下降。
-
-此时 channel 的 nominal SNR 为
-
-$$
-\operatorname{SNR}_t
-=\frac{\bar\alpha_t}{1-\bar\alpha_t},
-$$
-
-mutual information 可以精确写成
-
-$$
-I(X_0;X_t)
-=\frac d2\log(1+\operatorname{SNR}_t)
-=-\frac d2\log(1-\bar\alpha_t).
-$$
-
-当 $\bar\alpha_t\to0$ 时，它趋近 0。这个例子说明：forward diffusion 破坏的是 $X_t$ 对起点的可恢复信息，而不只是让某张 marginal density “看起来更圆”。
-
-对一般数据，Markov chain
-
-$$
-X_0\to X_s\to X_t,
-\qquad s<t,
-$$
-
-由 data processing inequality 给出
-
-$$
-I(X_0;X_t)\le I(X_0;X_s).
-$$
-
-这为“信息逐步被破坏”提供了不依赖图像直觉的表达。
-
-***
-
-## 7. 从 timestep 转向 SNR 与 log-SNR
-
-### 7.1 $t$ 只是索引，不是噪声强度
-
-两个模型都可以使用 $T=1000$，但在 $t=500$ 保留完全不同的 signal。直接比较 timestep 没有物理意义；应比较 $a(t)$、$b(t)$ 或由它们构成的 noise coordinate。
-
-为了跨离散和连续论文统一记号，先写
+根据 DDPM 2020 Eq. (4)，给定一个确定的干净样本 $x_0$ 时，
 
 $$
 q(x_t\mid x_0)
-=\mathcal N(a(t)x_0,b(t)^2I).
+=\mathcal N\!\left(
+\sqrt{\bar\alpha_t}x_0,
+(1-\bar\alpha_t)I
+\right)
 $$
 
-定义 nominal signal-to-noise ratio：
+确实是 Gaussian。这个式子描述的是“从某一个固定 $x_0$ 出发，加噪后会落在哪里”。
+
+为了描述整个数据集在时刻 $t$ 的分布，记 $q_t$ 为随机变量 $X_t$ 的无条件边缘密度。它需要对所有可能的起点 $X_0$ 做平均：
 
 $$
-\boxed{
-\operatorname{SNR}(t)=\frac{a(t)^2}{b(t)^2}.
-}
+q_t(x_t)
+=\mathbb E_{X_0\sim q_{\mathrm{data}}}
+\!\left[q(x_t\mid X_0)\right]
+=\int q(x_t\mid x_0)
+q_{\mathrm{data}}(x_0)\,dx_0.
 $$
 
-在 DDPM 的 variance-preserving (VP) 形式中，
+期望写法同时适用于连续和离散数据；当 $q_{\mathrm{data}}$ 具有密度时，它可以写成右侧积分。积分变量 $x_0$ 遍历数据空间，权重 $q_{\mathrm{data}}(x_0)$ 表示该区域的数据概率。这个 $q_t$ 通常是“缩放后的数据分布与 Gaussian kernel 的卷积”，而不是单个 Gaussian。
+
+下图用一个二维多峰分布展示同一过程。每种颜色代表原数据的一个 mode；随着 $t$ 增大，各 mode 一边向原点收缩，一边被 Gaussian noise 展宽，最终颜色与模式结构都难以区分。
+
+![Cosine schedule 下多峰数据的前向边缘分布](/images/diffusion/d1_forward_marginals.png)
+
+下面的一维双峰例子是对上述公式的直接推演，用来说明论文构造的含义，并非额外引用某篇论文的新定理。设 $m>0$，并假设一维数据 $X_0$ 只可能取 $-m$ 与 $m$，且二者概率相同：
 
 $$
-a(t)^2=\bar\alpha_t,\qquad b(t)^2=1-\bar\alpha_t,
+P(X_0=-m)=P(X_0=m)=\frac12,
 $$
 
-所以
+那么
 
 $$
-\boxed{
-\operatorname{SNR}_t
-=\frac{\bar\alpha_t}{1-\bar\alpha_t}.
-}
+q_t(x)
+=\frac12\mathcal N\!\left(
+-\sqrt{\bar\alpha_t}m,1-\bar\alpha_t
+\right)
++\frac12\mathcal N\!\left(
+\sqrt{\bar\alpha_t}m,1-\bar\alpha_t
+\right).
 $$
 
-严格地说，这是假设数据每个方向具有单位尺度时的 nominal SNR。若数据在某个特征方向上的 variance 为 $\lambda$，该方向的实际 power ratio 是
+早期时刻仍能看到两个数据模式；随着 $\bar\alpha_t$ 下降，两个均值向零靠近，Gaussian smoothing 同时变强，双峰逐渐合并。只要 $\bar\alpha_t>0$，这个分布一般仍是 Gaussian mixture。只有当
 
 $$
-\frac{\bar\alpha_t\lambda}{1-\bar\alpha_t}.
+\bar\alpha_t\to0
 $$
 
-这也是实现通常先把图像缩放到固定范围、理论分析引入 $\sigma_{\mathrm{data}}$ 的原因。
-
-### 7.2 negative log-SNR
-
-VDM 使用
+时，原始信号项消失，才有
 
 $$
-\boxed{
-\gamma(t)=-\log\operatorname{SNR}(t)
-=\log\frac{1-\bar\alpha_t}{\bar\alpha_t}.
-}
+X_t\xrightarrow{d}\mathcal N(0,I).
 $$
 
-forward 过程中 SNR 下降，故 $\gamma(t)$ 上升。对 VP parameterization，反解为
+符号 $\xrightarrow{d}$ 表示“依分布收敛”：当累计 signal power $\bar\alpha_t$ 趋于零时，$X_t$ 的分布趋近标准 Gaussian。
+
+因此，2015/2020 框架中的准确表述应当是：forward diffusion 逐渐降低 $X_t$ 中关于 $X_0$ 的信息，并让 aggregate marginal 接近一个简单 Gaussian prior，也就是逆向生成开始时希望采样的简单分布。有限离散步下通常是
 
 $$
-\bar\alpha(t)=\operatorname{sigmoid}(-\gamma(t)),
+q_T\approx\mathcal N(0,I),
+$$
+
+而不是由定义自动得到精确等号。
+
+这一区别后来产生了实际影响。定义终点的 signal-to-noise ratio 为
+
+$$
+\operatorname{SNR}_T
+=\frac{\bar\alpha_T}{1-\bar\alpha_T}.
+$$
+
+分子 $\bar\alpha_T$ 是终点残留的 signal power，分母 $1-\bar\alpha_T$ 是终点累计 noise power。Lin 等人在 WACV 2024 论文 [*Common Diffusion Noise Schedules and Sample Steps are Flawed*](https://arxiv.org/abs/2305.08891 "官方论文页面") 中指出，一些常用 schedule 满足 $\operatorname{SNR}_T>0$，即最后训练时刻仍保留非零信号，但推理却从纯 Gaussian noise 启动，形成 terminal train–inference mismatch。他们提出把 terminal SNR 重缩放到精确零，并要求 sampler 从训练的最后时刻开始。这个工作说明：一句被早期教程当作直觉的“终点就是纯噪声”，在真实系统中需要被认真核对。
+
+## 4. 2021—2022：研究重点转向“信息以多快速度消失”
+
+DDPM 2020 在 $T=1000$ 个时间步上使用 linear schedule：令 $\beta_1=10^{-4}$、$\beta_T=0.02$，中间的 $\beta_t$ 线性插值。但 $\beta_t$ 只表示第 $t$ 个 transition 加入多少噪声，真正决定 $X_t$ 还保留多少原始信息的是累计量
+
+$$
+\bar\alpha_t=\prod_{s=1}^{t}(1-\beta_s).
+$$
+
+这意味着“$\beta_t$ 线性增加”并不等于“数据难度线性变化”。2021 年之后，研究开始把注意力从单步方差转向累计信号强度。
+
+第一个关键节点是 Nichol 与 Dhariwal 的 ICML 2021 论文 [*Improved Denoising Diffusion Probabilistic Models*](https://arxiv.org/abs/2102.09672 "官方论文页面")。他们观察到，DDPM 的 linear schedule 会在低分辨率图像上过早破坏信息，于是直接设计累计 signal power 曲线。对离散时刻 $t\in\{0,1,\ldots,T\}$，论文定义
+
+$$
+\bar\alpha_t
+=\frac{f(t)}{f(0)},
 \qquad
-1-\bar\alpha(t)=\operatorname{sigmoid}(\gamma(t)).
-$$
-
-相较于 $\beta_t$，log-SNR 有三个优点：
-
-1. 它直接标记 noisy channel 的 signal/noise 比；
-2. VP、VE 和其他 Gaussian corruption 可以在同一坐标中比较；
-3. time reparameterization 的作用更清楚：改变 $\gamma(t)$ 的速度，就是改变有限 timesteps 在 noise-level axis 上的密度。
-
-若连续时间 $t\sim U[0,1]$，并令 $\lambda=\gamma(t)$，那么由换元公式
-
-$$
-p_\lambda(\lambda)
-=p_t(t)\left|\frac{dt}{d\lambda}\right|
-=\frac{1}{|\gamma'(t)|}.
-$$
-
-所以即使代码“uniformly sample time”，模型看到的 log-SNR 也未必均匀。schedule 已经隐式选择了 training noise-level proposal。
-
-### 7.3 跨论文记号不要机械对齐
-
-| 本章统一记号              | DDPM                                  | VDM                    | 含义                        |
-| ------------------- | ------------------------------------- | ---------------------- | ------------------------- |
-| $a(t)$              | $\sqrt{\bar\alpha_t}$                 | $\alpha_t$             | signal amplitude          |
-| $b(t)^2$            | $1-\bar\alpha_t$                      | $\sigma_t^2$           | cumulative noise variance |
-| one-step $\alpha_t$ | $1-\beta_t$                           | 不对应                    | DDPM 单步 signal power      |
-| $\gamma(t)$         | $\log((1-\bar\alpha_t)/\bar\alpha_t)$ | $-\log\mathrm{SNR}(t)$ | negative log-SNR          |
-
-VDM 的 $\alpha_t$ 对应 DDPM 的 $\sqrt{\bar\alpha_t}$，不是 DDPM 的 $1-\beta_t$。如果不先做这张映射表，很容易写出量纲不一致的式子。
-
-***
-
-## 8. Noise schedule 的问题-解决方案演进
-
-一个 schedule 至少要接受四项检查：
-
-1. **局部性**：每一步是否足够平滑，使相邻逆问题不过分困难；
-2. **覆盖**：有限 steps 是否覆盖了有意义的 noise range；
-3. **终点**：$q(x_T\mid x_0)$ 是否与 generation prior 足够一致；
-4. **资源分配**：训练和采样是否在重要 noise levels 上投入了足够计算。
-
-不存在脱离数据、目标、parameterization 和 sampler 的“唯一最优 schedule”。下面几种设计分别回应了不同问题。
-
-### 8.1 2015：schedule 已经是模型设计的一部分
-
-Sohl-Dickstein et al. 并没有把 forward rate 当成无关紧要的常数。论文 Section 2.4.1 把 $\beta_{2:T}$ 视为可由 likelihood lower bound 学习的参数，并固定第一步 $\beta_1$ 以减少过拟合。
-
-但论文叙述与同期公开代码需要分开记录：2015 年固定 commit 的 <code>model.py</code> 构造了 baseline schedule 和 perturbation coefficients，却保留了“把这些 coefficients 加入可学习参数”的 TODO；该代码快照实际使用固定 baseline。教程因此只能说“论文框架提出/描述学习 schedule”，不能用这份代码证明所有公开实验确实联合学习了 schedule（Sohl-Dickstein et al., 2015, Sec. 2.4.1；official code <code>model.py:81-108</code>）。
-
-这个早期落差也揭示了一个长期问题：schedule 既是理论路径的一部分，又深受具体实现约束。
-
-### 8.2 DDPM：linear $\beta_t$
-
-原始 DDPM 图像实验使用 $T=1000$，令
-
-$$
-\beta_t
-=\beta_{\min}
-+\frac{t-1}{T-1}(\beta_{\max}-\beta_{\min}),
-$$
-
-其中
-
-$$
-\beta_{\min}=10^{-4},\qquad \beta_{\max}=0.02.
-$$
-
-该选择简单、稳定，并让 terminal SNR 很小。它的局限是：$\beta_t$ 线性并不意味着感知信息或 log-SNR 均匀下降。Improved DDPM 观察到，在 32 和 64 分辨率图像上，linear schedule 的后段 latent 已接近纯噪声，若仍为这些时刻分配大量离散 steps，计算利用并不理想（Nichol & Dhariwal, 2021, Sec. 3.2, Figs. 3--5）。
-
-### 8.3 Improved DDPM：cosine cumulative signal
-
-Improved DDPM 不直接规定 $\beta_t$ 的形状，而是先规定 cumulative signal power：
-
-$$
-\bar\alpha_t=\frac{f(t)}{f(0)},
-$$
-
-$$
 f(t)=\cos^2\!\left(
-\frac{t/T+s}{1+s}\frac\pi2
+\frac{t/T+s}{1+s}\frac{\pi}{2}
 \right),
-\qquad s=0.008,
 $$
 
-再反算
+其中 $f(t)$ 是辅助的 cosine-squared 曲线，$s=0.008$ 是避免起点噪声变化过于剧烈的小偏移量。由于 $\bar\alpha_t$ 表示累计 signal power，相邻两时刻的比值可以反推出 one-step signal power，进而得到
 
 $$
+\alpha_t=\frac{\bar\alpha_t}{\bar\alpha_{t-1}},
+\qquad
 \beta_t=1-\frac{\bar\alpha_t}{\bar\alpha_{t-1}}.
 $$
 
-实际实现把 $\beta_t$ 截断到不超过 0.999，以避免末端奇异。该 schedule 让 $\bar\alpha_t$ 在中段下降得更接近线性，并在两端变化较缓。它在论文的图像实验中优于当时的 linear baseline，但 $\cos^2$ 和 $s=0.008$ 仍是有动机的工程设计，不是由普适最优性定理唯一推出（Nichol & Dhariwal, 2021, Eq. (17), p. 4）。
+cosine schedule 的意义不是某个定理证明它全局最优，而是把信息破坏更均匀地分配到整个时间区间；论文也明确承认，相似形状可能同样有效。
 
-### 8.4 VDM：把 $\gamma(t)$ 作为可学习单调函数
-
-VDM 直接参数化
+第二个节点是 Kingma、Salimans、Poole 与 Ho 的 NeurIPS 2021 论文 [*Variational Diffusion Models*](https://arxiv.org/abs/2107.00630 "官方论文页面")。VDM 不再把 timestep 当作最自然的噪声坐标，而是先用一个更一般的条件边缘描述加噪：
 
 $$
-\gamma_\eta(t)=-\log\operatorname{SNR}(t)
+q(z_t\mid x)
+=\mathcal N\!\left(
+\alpha(t)x,\sigma(t)^2I
+\right).
 $$
 
-为单调网络。这样 schedule 不再只是手工超参数，还能用于联合优化 endpoint 或降低 continuous-time loss estimator 的方差（Kingma et al., 2021, Secs. 3.2, 5.3 and App. I）。
+这里 $x$ 是干净数据，$z_t$ 是时刻 $t$ 的带噪变量，$\alpha(t)$ 是累计 signal amplitude，$\sigma(t)$ 是累计 noise standard deviation。需要特别注意：VDM 的 $\alpha(t)$ 对应 DDPM 的 $\sqrt{\bar\alpha_t}$，并不是 DDPM 中表示 one-step signal power 的 $\alpha_t=1-\beta_t$。
 
-VDM 的一个重要结论是：在 continuous time、SNR 严格单调、两端 SNR 相同，并对 denoiser 做相应重缩放时，不同 $(a(t),b(t))$ specification 可以定义等价的 continuous objective 和生成模型，latent 只差平凡尺度变换（Kingma et al., 2021, Sec. 5.1）。
+在这组记号下，VDM 定义
 
-这句话经常被过度简化成“schedule 不重要”。正确边界是：
+$$
+\operatorname{SNR}(t)
+=\frac{\alpha(t)^2}{\sigma(t)^2},
+\qquad
+\gamma(t)=-\log\operatorname{SNR}(t).
+$$
 
-- continuous objective 的 SNR integration range 可以只由 endpoints 决定；
-- uniform-time Monte Carlo estimator 的方差仍依赖 schedule shape；
-- finite-step training/sampling 的离散误差仍依赖网格；
-- 固定网络容量和优化过程不会因为理论重参数化就自动等价。
+$\operatorname{SNR}(t)$ 是 signal power 与 noise power 的比值；$\gamma(t)$ 则是 negative log-SNR，随着噪声增加而上升。在 DDPM 的 variance-preserving 写法中，$\alpha(t)^2=\bar\alpha_t$、$\sigma(t)^2=1-\bar\alpha_t$，因此
 
-### 8.5 读图：同一个名字下其实有不同曲线
+$$
+\operatorname{SNR}_t
+=\frac{\bar\alpha_t}{1-\bar\alpha_t}.
+$$
 
-![不同 forward schedules 的 one-step variance、累计 signal 和 SNR](/images/diffusion/d1_schedule_comparison.png)
+SNR 大表示输入仍接近数据，SNR 小表示输入几乎只剩噪声。VDM 的推进在于：它把不同 Gaussian diffusion specification、连续时间目标和 loss weighting 放进同一个 SNR/log-SNR 坐标中讨论，并允许学习单调的 noise schedule。
 
-左图使用对数纵轴；红线的最后一步达到 $\beta_T=1$，用于实现 exact zero terminal SNR。右图为绘图把 SNR 下限截到 $10^{-12}$，exact zero 本身对应 $\log\mathrm{SNR}=-\infty$。
+但 VDM 的结论不能被简化成“schedule 不重要”。它证明的某些连续时间等价需要相同的 SNR 端点、单调可逆的参数化和相应的网络重缩放；有限步离散误差、训练采样方差和神经网络优化仍会受到 schedule 影响。
 
-配套代码在 float64 下复现了 $T=1000$ 的 terminal 数值：
-
-| schedule                         |        $\bar\alpha_T$ | $\operatorname{SNR}_T$ |
-| -------------------------------- | --------------------: | ---------------------: |
-| DDPM linear $\beta$              | $4.0358\times10^{-5}$ |  $4.0360\times10^{-5}$ |
-| Improved DDPM cosine（clip 0.999） | $2.4288\times10^{-9}$ |  $2.4288\times10^{-9}$ |
-| latent scaled-linear             | $4.6601\times10^{-3}$ |  $4.6819\times10^{-3}$ |
-
-这些值与 Lin et al. 2024, Table 1 的量级一致。它们说明“非零”不是一个二元标签：$10^{-9}$ 和 $10^{-3}$ 都不严格为 0，但保留 signal 的程度相差六个数量级。
-
-***
-
-## 9. EDM 之后：不要再让 schedule 承担所有职责
-
-Karras et al. 在 EDM 中把多个 diffusion family 重写到以 additive noise standard deviation $\sigma$ 为坐标的共同框架：
+第三个节点是 Karras 等人的 NeurIPS 2022 论文 [*Elucidating the Design Space of Diffusion-Based Generative Models*](https://arxiv.org/abs/2206.00364 "官方论文页面")。EDM 直接以 noise standard deviation $\sigma$ 标记 noisy marginal：
 
 $$
 p(x;\sigma)
 =p_{\mathrm{data}}*\mathcal N(0,\sigma^2I).
 $$
 
-对这种坐标，可以粗略理解为 $a=1,b=\sigma$，因此 nominal SNR 为 $1/\sigma^2$。EDM 最值得带回 D1 的并不是某个具体 FID，而是它把长期纠缠在 “schedule” 一词中的组件拆开了（Karras et al., 2022, Table 1, pp. 2--5）。
+这里星号 $*$ 表示卷积：先从数据分布 $p_{\mathrm{data}}$ 采样干净数据，再加入标准差为 $\sigma$ 的 Gaussian noise，所得密度记为 $p(x;\sigma)$。EDM 以 $\sigma$ 作为直接的 noise-level coordinate，并把过去经常混称为“schedule”的对象拆开：
 
-| 设计对象                            | 它回答的问题                                      | 典型记号                                  |
-| ------------------------------- | ------------------------------------------- | ------------------------------------- |
-| forward marginal path           | 每个 noise level 的 corrupted distribution 是什么 | $a(t),b(t)$ 或 $\sigma$                |
-| time/noise coordinate           | 用什么参数标记同一条 path                             | $t,\gamma,\sigma$                     |
-| training proposal               | 训练时哪些 noise levels 更常出现                     | $p_{\mathrm{train}}(\sigma)$          |
-| loss weighting/parameterization | 各 noise level 的误差怎样计入目标                     | $\lambda(\sigma)$、预测 $x_0/\epsilon/v$ |
-| sampling grid and solver        | 生成时在哪些点调用网络、怎样积分                            | $\{\sigma_i\}$、Euler/Heun 等           |
+- forward/noise-level path 决定经过哪些 noisy distributions；
+- training noise distribution 决定训练时哪些噪声级出现得更多；
+- loss weighting 决定哪些噪声级贡献更大梯度；
+- sampling grid 决定生成时把有限计算花在哪些噪声级；
+- solver 决定如何在这些点之间推进。
 
-EDM 的 training noise distribution 使用 log-normal 形式，而 sampling grid 使用 polynomial spacing：
+下图把几种常见 schedule 放在同一坐标中比较。左图是一阶方差 $\beta_t$，中图是累计 signal power $\bar\alpha_t$，右图是 $\log_{10}\operatorname{SNR}_t$。同一条 schedule 在三种坐标下呈现完全不同的形状，这正是不能只看“$\beta_t$ 是否线性”的原因。
 
-$$
-\sigma_{i<N}
-=\left[
-\sigma_{\max}^{1/\rho}
-+\frac{i}{N-1}
-(\sigma_{\min}^{1/\rho}-\sigma_{\max}^{1/\rho})
-\right]^\rho,
-\qquad \sigma_N=0.
-$$
+![不同 noise schedule 的单步方差、累计信号与 SNR 对比](/images/diffusion/d1_schedule_comparison.png)
 
-这表明训练和采样没有理由必须以相同密度分配 noise levels。论文发现 $\rho\approx3$ 较能均衡 local truncation error，但图像 FID 更偏好 5--10，正文使用 $\rho=7$；数值误差均衡与感知质量最优并非同一个目标（Karras et al., 2022, Eq. (5) and App. D.1）。
+这条 2020—2022 的演进线索说明，研究者最初问“每一步加多少噪声”，后来逐渐改问“信息沿什么坐标消失、训练和采样应怎样分配有限计算”。这比记住 linear、cosine 或某组默认参数更接近 schedule 研究的本质。
 
-> **跨文献综合。** 更准确的说法不是“选择一个好 schedule”，而是：先选择希望经过的 noisy marginals，再分别决定训练测度、loss metric、network parameterization 和采样网格。改变 schedule 往往会同时移动这些对象，所以实验有效并不自动说明真正起作用的是哪一个机制。Dieleman 2024 的长文进一步系统化了这一批判。
+## 5. 这条历史线索最终解决了什么
 
-***
+从 2015 到 2024，前向扩散的演进可以压缩成四步。
 
-## 10. Terminal SNR：近似 prior 还是精确匹配 prior
+2015 年，Sohl-Dickstein et al. 用一条渐进 Markov chain 连接数据分布与简单平稳分布，建立“固定破坏过程、学习逆过程”的生成框架。它解决了如何为复杂生成问题规定中间路径。
 
-### 10.1 标准做法中的 train-inference gap
+2020 年，Ho et al. 用 DDPM 的 closed-form marginal 与有效参数化，把这条路径变成可高效采样的训练接口。它解决了如何在任意噪声尺度制造监督数据。
 
-生成时通常设
+2021—2022 年，Improved DDPM、VDM 与 EDM 逐步把单步 $\beta_t$、累计信号、SNR、训练分布、loss weighting 和采样网格拆成不同设计对象。它们解决了“schedule”概念长期含混的问题。
+
+2024 年，Lin et al. 进一步指出 terminal SNR 与 sampler 起点必须和训练分布一致。它提醒我们，理论上的“接近纯噪声”在工程系统中可能仍留下可见偏差。
+
+这些工作共同给出了 Diffusion 的第一个核心答案：
+
+> 加噪之所以有用，不是因为 Gaussian noise 本身能够创造数据，而是因为一个已知、可直接采样、覆盖多种信息尺度的前向过程，能够持续制造逆向学习所需的训练问题。
+
+这个答案同时划清了 forward diffusion 的职责边界。记 $q_{t-1}(x)$ 与 $q_t(x)$ 分别为随机变量 $X_{t-1}$ 和 $X_t$ 的无条件边缘密度。即使 forward transition $q(x_t\mid x_{t-1})$ 完全已知，对于已经观察到的带噪状态 $x_t$，Bayes rule 仍给出
 
 $$
-p(x_T)=\mathcal N(0,I).
+q(x_{t-1}\mid x_t)
+=\frac{
+q(x_t\mid x_{t-1})q_{t-1}(x_{t-1})
+}{q_t(x_t)},
 $$
 
-但训练时
+分子包含未知边缘 $q_{t-1}(x_{t-1})$，分母 $q_t(x_t)$ 也由未知的 data distribution 推送而来。因此 forward transition 是 Gaussian，并不意味着无条件 reverse transition 已经可计算，更不意味着它在有限步下必然是 Gaussian。
+
+换句话说，
 
 $$
-x_T
-=\sqrt{\bar\alpha_T}x_0
-+\sqrt{1-\bar\alpha_T}\epsilon.
+\boxed{
+\text{known forward transition}
+\ \not\Rightarrow\
+\text{known unconditional reverse transition}.
+}
 $$
 
-只要 $\bar\alpha_T>0$，训练输入就仍含少量 data signal，而从 prior 抽取的 inference input 不含这些 signal。这构成 endpoint distribution mismatch。
-
-传统 DDPM 通过让 $\bar\alpha_T$ 很小来近似解决它；变分目标中的 prior term
-
-$$
-D_{\mathrm{KL}}(q(x_T\mid x_0)\Vert p(x_T))
-$$
-
-也会显式记录 mismatch。因而“terminal SNR 非零”不等于模型在数学上完全无效，问题在于近似是否足够，以及训练和 sampler 是否以一致方式处理 endpoint。
-
-Lin et al. 指出，Stable Diffusion 2.1 所用 scaled-linear schedule 的 terminal SNR 约为 $4.68\times10^{-3}$，保留 signal 明显多于 DDPM linear 和 clipped cosine。他们将这与模型偏向中等亮度的现象联系起来，并提出 exact zero terminal SNR、v-prediction、从最后 timestep 开始采样和 guidance rescaling 等修正（Lin et al., 2024, Secs. 3--4）。
-
-这组实验主要针对 Stable Diffusion，不能直接上升为“所有非零 terminal SNR 都必然导致同等亮度问题”的定理。
-
-### 10.2 在 $\sqrt{\bar\alpha_t}$ 空间重缩放
-
-令
-
-$$
-r_t=\sqrt{\bar\alpha_t}.
-$$
-
-Lin et al. 的 rescaling 保留第一个训练时刻的 signal amplitude，并把最后一个移到 0：
-
-$$
-r_t'
-=r_1\frac{r_t-r_T}{r_1-r_T},
-\qquad
-\bar\alpha_t'=(r_t')^2.
-$$
-
-于是
-
-$$
-r_1'=r_1,\qquad r_T'=0,\qquad \bar\alpha_T'=0.
-$$
-
-再从 cumulative quantities 恢复
-
-$$
-\alpha_1'=\bar\alpha_1',
-\qquad
-\alpha_t'=\frac{\bar\alpha_t'}{\bar\alpha_{t-1}'},
-\qquad
-\beta_t'=1-\alpha_t'.
-$$
-
-最后一步会得到 $\beta_T'=1$。这精确消除 signal，却也让部分传统公式出现除以 $\sqrt{\alpha_T}$ 或计算 $\log0$ 的数值问题。exact-zero endpoint 必须与 parameterization 和 sampler 一起设计，不能只改一行 betas 后继续假设所有旧公式都非奇异。
-
-### 10.3 为什么 zero SNR 会暴露 $\epsilon$-prediction 的端点退化
-
-当 $\bar\alpha_T=0$ 时，
-
-$$
-x_T=\epsilon.
-$$
-
-若 target 也是 $\epsilon$，网络在该点只需复制输入，loss 不再提供任何关于 $x_0$ 的监督。Lin et al. 建议使用
-
-$$
-v_t
-=\sqrt{\bar\alpha_t}\epsilon
--\sqrt{1-\bar\alpha_t}x_0.
-$$
-
-在 terminal endpoint，
-
-$$
-v_T=-x_0.
-$$
-
-于是 conditional model 仍需根据条件信息估计数据，而不是完成 trivial identity task。不同 prediction parameterization 如何对应不同 loss weighting，将在 D2/D3 继续展开。
-
-### 10.4 sampler 必须从训练 endpoint 启动
-
-即使 schedule 已经做到 $\bar\alpha_T=0$，若少步 sampler 的第一个 network evaluation 使用 $t<T$，它仍会把 pure noise 交给一个只在 nonzero-SNR inputs 上训练过的时刻。Lin et al. 因此要求 sampling grid 包含最后训练 timestep。
-
-“包含 endpoint”解决的是 train-inference input mismatch；“怎样安排其余步点”解决的是 finite-step discretization error。两者也不是同一个问题。
-
-***
-
-## 11. 从公式到 PyTorch
-
-完整可运行版本位于 d1\_forward\_diffusion.py（补充材料暂未公开）。它使用 <code>torch.float64</code> 构造 schedules，使用 PyTorch/Matplotlib 生成本章两张图，不包含模型训练。
-
-### 11.1 构造 linear 与 cosine schedules
-
-```python
-import math
-import torch
-
-
-def linear_beta_schedule(T, beta_start=1e-4, beta_end=2e-2):
-    return torch.linspace(beta_start, beta_end, T, dtype=torch.float64)
-
-
-def cosine_beta_schedule(T, s=0.008, max_beta=0.999):
-    grid = torch.linspace(0, 1, T + 1, dtype=torch.float64)
-    alpha_bar = torch.cos((grid + s) / (1 + s) * math.pi / 2).square()
-    alpha_bar = alpha_bar / alpha_bar[0]
-    betas = 1 - alpha_bar[1:] / alpha_bar[:-1]
-    return betas.clamp(min=1e-12, max=max_beta)
-```
-
-cosine schedule 先定义 $T+1$ 个 cumulative endpoints，再由相邻比值恢复 $T$ 个 one-step betas。
-
-### 11.2 预计算 forward coefficients
-
-```python
-betas = cosine_beta_schedule(T=1000)
-alphas = 1.0 - betas
-alpha_bar = torch.cumprod(alphas, dim=0)
-
-sqrt_alpha_bar = torch.sqrt(alpha_bar)
-sqrt_one_minus_alpha_bar = torch.sqrt(1.0 - alpha_bar)
-```
-
-这些数组都使用代码索引 <code>0,...,T-1</code>。代码的 <code>alpha\_bar\[0]</code> 对应论文 $\bar\alpha_1$，不是 $\bar\alpha_0=1$。
-
-### 11.3 为 batch 提取不同 timestep 的系数
-
-```python
-def extract(coefficients, t, x):
-    # t: [batch], x: [batch, ...]
-    values = coefficients.to(device=x.device, dtype=x.dtype)[t]
-    return values.reshape(t.shape[0], *((1,) * (x.ndim - 1)))
-```
-
-例如图像张量形状为 <code>\[B, C, H, W]</code>，reshape 后的系数为 <code>\[B, 1, 1, 1]</code>，可以沿 channel 和空间维广播。
-
-### 11.4 直接采样 $q(x_t\mid x_0)$
-
-```python
-def q_sample(x0, t, sqrt_alpha_bar, sqrt_one_minus_alpha_bar, noise=None):
-    if noise is None:
-        noise = torch.randn_like(x0)
-
-    signal = extract(sqrt_alpha_bar, t, x0) * x0
-    corruption = extract(sqrt_one_minus_alpha_bar, t, x0) * noise
-    return signal + corruption, noise
-```
-
-训练时每个 batch item 可以有不同的 $t$。返回 noise 是因为下一章的模型会把它作为监督 target。
-
-### 11.5 rescale 到 exact zero terminal SNR
-
-```python
-def rescale_zero_terminal_snr(betas):
-    alpha_bar_sqrt = torch.cumprod(1 - betas, dim=0).sqrt()
-    first = alpha_bar_sqrt[0].clone()
-    last = alpha_bar_sqrt[-1].clone()
-
-    alpha_bar_sqrt = alpha_bar_sqrt - last
-    alpha_bar_sqrt = alpha_bar_sqrt * first / (first - last)
-    alpha_bar = alpha_bar_sqrt.square()
-
-    alphas = torch.cat([alpha_bar[:1], alpha_bar[1:] / alpha_bar[:-1]])
-    return 1 - alphas
-```
-
-实际库代码还应检查输入范围、单调性、dtype 和 exact-zero endpoint。配套脚本已加入这些检查。
-
-### 11.6 最小不变量测试
-
-对每个 schedule，至少检查：
-
-```python
-assert torch.all((betas > 0) & (betas <= 1))
-assert torch.all(alpha_bar[1:] <= alpha_bar[:-1])
-assert torch.allclose(
-    sqrt_alpha_bar.square() + sqrt_one_minus_alpha_bar.square(),
-    torch.ones_like(alpha_bar),
-)
-```
-
-对 zero-terminal rescale 还应检查：
-
-```python
-assert torch.allclose(new_alpha_bar[0], old_alpha_bar[0])
-assert new_alpha_bar[-1] == 0
-```
-
-这些检查不能证明 schedule 适合某个生成任务，但可以尽早发现索引、累计乘积和数值实现错误。
-
-***
-
-## 12. 常见错误与边界
-
-### 错误 1：把 $\beta_t$ 当成累计噪声
-
-$\beta_t$ 只是一小步 variance；累计噪声是 $1-\bar\alpha_t$。
-
-### 错误 2：把 $\alpha_t$ 与 $\bar\alpha_t$ 混用
-
-$\alpha_t=1-\beta_t$ 是单步 signal power；$\bar\alpha_t$ 是从数据到当前时刻的累计 signal power。
-
-### 错误 3：认为每个 conditional Gaussian 意味着 marginal Gaussian
-
-$q(x_t\mid x_0)$ 是 Gaussian，不代表对 $x_0$ 混合后的 $q_t(x_t)$ 是 Gaussian。
-
-### 错误 4：用同一个 $\epsilon$ 画多个时刻，就称其为 forward trajectory
-
-这只保证每个时刻的 marginal 正确，不保证联合 Markov law 正确。
-
-### 错误 5：把 $q(x_T\mid x_0)\approx\mathcal N(0,I)$ 写成无条件等号
-
-对固定 $x_0$ 的 conditional，exact equality 需要 signal coefficient 为 0。对 aggregate $q_T$，若数据本身恰为与 kernel 相容的 Gaussian，也可能在非零 signal 下保持 Gaussian；两种等号条件不能混写。
-
-### 错误 6：从 VDM 推出“schedule 完全不重要”
-
-其 equivalence 有 continuous-time、endpoint 和 denoiser transformation 条件；finite discretization、estimator variance 和优化仍会受 schedule 影响。
-
-### 错误 7：把 training proposal、loss weighting 与 sampling grid 都叫 schedule
-
-它们可以相互作用，但数学职责不同。importance correction 还决定了改变 training proposal 是只改变 estimator variance，还是连 objective 一起改变。
-
-### 错误 8：只把 $\beta_T$ 改成 1，就认为 zero-terminal 模型完成了适配
-
-exact-zero endpoint 会影响 prediction target、reverse formula、log variance 和 sampler 起点，需要整体处理。
-
-***
-
-## 13. 技术演进：不是越来越复杂，而是逐步拆清问题
-
-| 年份   | 工作                    | 当时的问题                                          | 关键推进                                                    | 留下的问题                                 |
-| ---- | --------------------- | ---------------------------------------------- | ------------------------------------------------------- | ------------------------------------- |
-| 2015 | Sohl-Dickstein et al. | 灵活密度难训练、难采样                                    | 用 tractable forward diffusion 定义 learned reverse chain  | 原始图像质量有限；schedule/variance 设计空间大      |
-| 2020 | DDPM                  | diffusion 尚未显示强图像生成能力                          | closed-form marginal + 简单 noise prediction 参数化          | linear schedule、fixed variance、慢采样    |
-| 2021 | Improved DDPM         | 信息破坏与计算分配不理想                                   | cosine cumulative schedule                              | schedule 仍是经验设计                       |
-| 2021 | VDM                   | 不同 diffusion specifications 难统一                | SNR/log-SNR 坐标与 continuous-time equivalence             | finite grid 与 estimator variance 仍需设计 |
-| 2022 | EDM                   | schedule、preconditioning、solver、weighting 相互纠缠 | 把 training measure、network scaling 和 sampling grid 拆开   | 最佳资源分配仍依赖任务                           |
-| 2024 | Lin et al.            | terminal training input 与 inference prior 不一致  | zero terminal SNR、v-prediction、endpoint-aligned sampler | exact-zero 的数值和普适收益仍需具体评估             |
-
-这一时间线的重点不是“新 schedule 取代旧 schedule”，而是研究问题从“怎样让 forward process 可计算”逐渐转向“怎样在 noise-level axis 上正确分配统计和计算资源”。
-
-***
-
-## 14. 本章给下一章准备了什么
-
-[D2](/blog/diffusion/d2-ddpm-objective/) 从未知的 reverse conditional 出发。到这里，我们已经准备好四个关键工具：
-
-1. forward path factorization
-
-   $$
-   q(x_{1:T}\mid x_0)=\prod_{t=1}^{T}q(x_t\mid x_{t-1});
-   $$
-
-2. 任意时刻 direct marginal
-
-   $$
-   q(x_t\mid x_0)
-   =\mathcal N(\sqrt{\bar\alpha_t}x_0,(1-\bar\alpha_t)I);
-   $$
-
-3. reparameterized training sample
-
-   $$
-   x_t=\sqrt{\bar\alpha_t}x_0+\sqrt{1-\bar\alpha_t}\epsilon;
-   $$
-
-4. 一套能比较不同噪声强度的 SNR/log-SNR 坐标。
-
-下一章会证明：给定训练样本 $x_0$ 和 noisy state $x_t$，一步 posterior
-
-$$
-q(x_{t-1}\mid x_t,x_0)
-$$
-
-也是解析 Gaussian。随后，path ELBO 的每个 reverse KL 会变成一个监督回归问题，最终导出 DDPM 的 noise-prediction objective。
-
-***
-
-## 15. 章节小结
-
-- forward diffusion 是人为规定的 corruption/inference process，不需要神经网络；
-
-- DDPM 使用 variance-preserving Gaussian Markov chain，$\mathcal N(0,I)$ 是其 invariant distribution；
-
-- $\beta_t$ 控制单步噪声，$\bar\alpha_t$ 控制从 $x_0$ 到 $x_t$ 的累计 signal；
-
-- 由于 Gaussian 线性组合封闭，任意时刻都可直接采样：
-
-  $$
-  x_t=\sqrt{\bar\alpha_t}x_0+\sqrt{1-\bar\alpha_t}\epsilon;
-  $$
-
-- direct marginal sampling 与真实 Markov trajectory sampling 是不同的联合 coupling；
-
-- 有限时刻的 aggregate data marginal 通常不是 Gaussian；terminal prior 匹配需要足够小或精确为零的 signal coefficient；
-
-- SNR/log-SNR 比 timestep 更适合跨 schedule 比较；
-
-- linear、cosine、learned log-SNR 和 zero-terminal rescaling 解决的是不同层面的问题；
-
-- EDM 之后，更清晰的做法是分别讨论 forward path、training proposal、loss weighting、parameterization 和 sampling grid。
-
-***
-
-## 16. 思考题
-
-1. **一步完全加噪为何没有帮助？** 从 mutual information 和逆条件分布两个角度解释 $\beta_1=1$ 与“很多小步”的区别。
-
-2. **marginal 相同是否意味着过程相同？** 设多个 $x_t$ 都用同一个 $\epsilon$ 直接构造。证明每个 marginal 正确，并分析为什么它们的 cross-time covariance 一般不同于原 Markov chain。
-
-3. **time reparameterization 保持了什么？** 给定严格单调 $\gamma(t)$，换一个单调时间坐标后，哪些 noisy marginals 不变？training proposal、loss estimator variance 和 finite sampling grid 中哪些会改变？
-
-4. **SNR 是否真的与数据无关？** 若数据 covariance 为 $\Sigma_0\ne I$，分析不同 eigen-directions 的实际 signal/noise ratio。一个 scalar SNR 会隐藏什么？
-
-5. **exact zero 的收益与代价。** $\bar\alpha_T=0$ 消除了哪一种 mismatch？它为什么又会使某些 DDPM reverse formulas 数值奇异？设计实现时应在哪些接口上增加 endpoint handling？
-
-6. **cosine 的成功说明了什么？** 区分以下三种论断：cosine 比某个 linear baseline 好；cosine 对所有数据最优；感知信息在 cosine time 中均匀下降。哪些有论文实验证据，哪些还需要额外定义或证明？
-
-7. **训练与采样是否应使用同一 noise-level density？** 结合“学习难度”“perceptual relevance”“误差累积”和“ODE truncation error”，论证二者可能不同的原因。
-
-***
-
-## 17. 本章来源与继续阅读
-
-核心历史和公式优先引用原始论文；教学资料只用于讲解顺序与代码对照。
-
-1. Jascha Sohl-Dickstein et al. *Deep Unsupervised Learning using Nonequilibrium Thermodynamics*. ICML 2015. 本地论文（补充材料暂未公开）；[结构化笔记](https://arxiv.org/abs/1503.03585 "官方论文页面")。
-2. Jonathan Ho, Ajay Jain, Pieter Abbeel. *Denoising Diffusion Probabilistic Models*. NeurIPS 2020. 本地论文（补充材料暂未公开）；[结构化笔记](https://arxiv.org/abs/2006.11239 "官方论文页面")。
-3. Alex Nichol, Prafulla Dhariwal. *Improved Denoising Diffusion Probabilistic Models*. ICML 2021. 本地论文（补充材料暂未公开）；[结构化笔记](https://arxiv.org/abs/2102.09672 "官方论文页面")。
-4. Diederik P. Kingma et al. *Variational Diffusion Models*. NeurIPS 2021. 本地论文（补充材料暂未公开）；[结构化笔记](https://arxiv.org/abs/2107.00630 "官方论文页面")。
-5. Tero Karras et al. *Elucidating the Design Space of Diffusion-Based Generative Models*. NeurIPS 2022. 本地论文（补充材料暂未公开）；[D1 相关笔记](https://arxiv.org/abs/2206.00364 "官方论文页面")。
-6. Shanchuan Lin et al. *Common Diffusion Noise Schedules and Sample Steps are Flawed*. WACV 2024. 本地论文（补充材料暂未公开）；[结构化笔记](https://arxiv.org/abs/2305.08891 "官方论文页面")。
-7. Niels Rogge, Kashif Rasul. *The Annotated Diffusion Model*. Hugging Face, 2022. 官方 Markdown 快照（补充材料暂未公开）；使用边界笔记（补充材料暂未公开）。
-8. Sander Dieleman. *Noise Schedules Considered Harmful*. 2024. 本地网页快照（补充材料暂未公开）。
-9. Chieh-Hsin Lai et al. *The Principles of Diffusion Models*. arXiv:2510.21890v2, 2026 revision. 固定版本 PDF（补充材料暂未公开）；D0--D2 范围核验（补充材料暂未公开）。
-
-独立代数复核见 DDPM core derivation ledger（补充材料暂未公开）。官方代码版本与 commit 见 code provenance（补充材料暂未公开）。
+前向扩散完成的不是生成本身，而是把一个难以直接学习的 data distribution，改写成一族带有已知 corruption rule、明确 noise scale 和可直接采样 training pairs 的逆向问题。它提供了生成学习的坐标系与课程，却把“如何从这些 training pairs 恢复 reverse dynamics”留给模型学习。到这里，“为什么要先毁掉数据”已经得到完整回答。
+
+## 本章论文索引
+
+| 时间   | 论文                                                                                            | 本章中的作用                                                         |
+| ---- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 2015 | Sohl-Dickstein et al., *Deep Unsupervised Learning using Nonequilibrium Thermodynamics*, ICML | 建立 forward diffusion、learned reversal 与 path variational bound |
+| 2020 | Ho et al., *Denoising Diffusion Probabilistic Models*, NeurIPS                                | 给出 DDPM 系统与任意时刻 direct noising 接口                              |
+| 2021 | Nichol & Dhariwal, *Improved Denoising Diffusion Probabilistic Models*, ICML                  | 用 cosine cumulative schedule 改善信息破坏速度                          |
+| 2021 | Kingma et al., *Variational Diffusion Models*, NeurIPS                                        | 用 SNR/log-SNR 统一 forward schedule 与连续目标                        |
+| 2022 | Karras et al., *Elucidating the Design Space of Diffusion-Based Generative Models*, NeurIPS   | 拆分 noise path、训练分布、权重、采样网格与 solver                             |
+| 2024 | Lin et al., *Common Diffusion Noise Schedules and Sample Steps are Flawed*, WACV              | 指出 nonzero terminal SNR 与采样起点造成的 mismatch                      |
