@@ -1,5 +1,5 @@
 ---
-title: 去噪器究竟学到了什么，又怎样反转一条扩散
+title: 去噪器究竟学到了什么，又如何驱动反向扩散
 description: >-
   连接 score matching、denoising、reverse-time SDE 与 probability-flow
   ODE，解释去噪网络真正学习的向量场。
@@ -225,7 +225,7 @@ $$
 
 ![DSM conditional target、marginal score 与 Tweedie identity](/images/diffusion/d3_dsm_tweedie.png)
 
-同一恒等式还能解释 denoiser 的输出。通常称为 Tweedie formula 的 Gaussian posterior-mean identity可以写成
+同一恒等式还能解释 denoiser 的输出。通常称为 Tweedie formula 的 Gaussian posterior-mean identity 可以写成
 
 $$
 \boxed{
@@ -508,7 +508,7 @@ Probability-flow ODE 还允许使用 continuous change of variables 计算该 OD
 
 > 去噪器学到的是各噪声时刻的 marginal score；score 既给出 posterior-mean denoising direction，也给出 reverse-time SDE 的密度修正项，并能进一步定义同边缘的 probability-flow ODE。
 
-从 2005 年 score matching，到 2011 年 DSM，再到 2019 年 NCSN 和 2021 年 Score-SDE，研究主线始终是在寻找同一个对象的更可训练、更可采样表示。后续问题将从“动力学是什么”转向“如何用有限网络、有限步数与有限计算稳定地实现这条动力学”。
+从 2005 年 score matching，到 2011 年 DSM，再到 2019 年 NCSN 和 2021 年 Score-SDE，研究主线始终是在寻找同一个对象的更可训练、更可采样表示。这条演进最终把去噪目标、密度几何与生成动力学连接成了同一套理论接口。
 
 ## 本章论文索引
 

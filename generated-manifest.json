@@ -168,33 +168,33 @@
     },
     {
       "source": "rewrite/diffusion/01_why_noising_helps_generation.md",
-      "sourceSha256": "a8b0788d277ffaa4720d80784e57ef76ff16e296f9fef4de2de6c600d42a0c73",
+      "sourceSha256": "10265bff12e47c35af7236e48de875b3a976b903e42ac18ce4d7ff9e9de43bf9",
       "output": "src/content/series/diffusion/d1-forward-diffusion.md",
-      "outputSha256": "03c2dd224207e2a9718cffb79732e58f6a86e19ac2925ff6014cca23d2e40d16"
+      "outputSha256": "2cb526608ff8a590c0a749e614704a051136d0340aa838e4792abaee34e2791a"
     },
     {
       "source": "rewrite/diffusion/02_how_ddpm_learns_reverse.md",
-      "sourceSha256": "519f0d4121956e146ba43d5001208934b12667e5dbdfda861815deaa9baf16f1",
+      "sourceSha256": "317297a688771d7bce88daabc1d87fc1814447f47e2ba93fb3f1d9d48434c8aa",
       "output": "src/content/series/diffusion/d2-ddpm-objective.md",
-      "outputSha256": "da1e4856f00bafc96ff4dc35c3b1e46d0dc78e71f62175e18c396f7d12842b7f"
+      "outputSha256": "6429108f3c1af4ee4b8a2c83a6b400da6b537a4e4422526d934baef01d7e8ffd"
     },
     {
       "source": "rewrite/diffusion/03_score_and_continuous_dynamics.md",
-      "sourceSha256": "72366706b788a0f832bdff99b4d0f2a0189143877d59262efaae3dfce1679348",
+      "sourceSha256": "f867077631e50d753400ba8afeacb9a4810dd5dc3b747075944534aaa0255cd7",
       "output": "src/content/series/diffusion/d3-score-and-continuous-dynamics.md",
-      "outputSha256": "70017b5e5de5711c9e9553552de8250e4d85d6342f06e20d3bf2668c89861cdc"
+      "outputSha256": "c19591004796399fc6e88834b68089e922712caceb63503f5c74d6ac7df9781e"
     },
     {
       "source": "rewrite/diffusion/04_modern_diffusion_system.md",
-      "sourceSha256": "93c5c011e442cd19613c3956891ae7b9ffb6b4381fc1dd7a61160c2fdc3efad9",
+      "sourceSha256": "a1d1366496b69b68f0b8c62f7d8bbbe853ea4b1d99c229d588736eefa8251665",
       "output": "src/content/series/diffusion/d4-modern-diffusion-system.md",
-      "outputSha256": "57a6055d2570174231ee704bd3ad4d273f4281713154df537f7189d524d99d2d"
+      "outputSha256": "456c3e2f6af189b017952996e3a8af7e83f0015f58632e4a8485b9ce8a318802"
     },
     {
       "source": "rewrite/diffusion/05_from_diffusion_to_flow_and_few_steps.md",
-      "sourceSha256": "363ff6b608b92c26d4382c0d0ddacde5d726b44ae6b842c6470413d6a55a7099",
+      "sourceSha256": "932a9021a8621f07c6dc0b854b3ea3fdd4791f0b44e16e66d0a27043397f0d4c",
       "output": "src/content/series/diffusion/d5-flow-and-few-step-generation.md",
-      "outputSha256": "ff04912c640ff07f5c7b46ed0b85ea056bd93c1307af92e180ddae941d864f37"
+      "outputSha256": "61a45732416cc4592122036cd7d2423ea34e06af14fa8326a93fd16838a6c167"
     },
     {
       "source": "diffusion/assets/d1_forward_marginals.png",

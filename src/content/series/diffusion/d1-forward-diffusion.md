@@ -175,7 +175,7 @@ $$
 
 模型由此可以在一次训练中看到同一数据分布的许多破坏程度。前向过程不再只是一个物理类比，而成为一台可以无限制造 $(x_0,x_t,\varepsilon)$ 训练样本的机器。
 
-这也是 DDPM 与“一次从噪声映射到图像”的根本差别：它人为规定了数据与噪声之间的中间状态，使网络可以在不同信息尺度上接受监督。2020 年论文随后利用可解析的 $q(x_{t-1}\mid x_t,x_0)$，把逆过程训练转化为 noise-prediction regression；那是下一章的主题。
+这也是 DDPM 与“一次从噪声映射到图像”的根本差别：它人为规定了数据与噪声之间的中间状态，使网络可以在不同信息尺度上接受监督。2020 年论文随后利用可解析的 $q(x_{t-1}\mid x_t,x_0)$，把逆过程训练转化为 noise-prediction regression，为学习反向过程提供了可计算的接口。
 
 ## 3. “数据变成 Gaussian”究竟是什么意思
 
@@ -335,7 +335,7 @@ $$
 - sampling grid 决定生成时把有限计算花在哪些噪声级；
 - solver 决定如何在这些点之间推进。
 
-下图把几种常见 schedule 放在同一坐标中比较。左图是一阶方差 $\beta_t$，中图是累计 signal power $\bar\alpha_t$，右图是 $\log_{10}\operatorname{SNR}_t$。同一条 schedule 在三种坐标下呈现完全不同的形状，这正是不能只看“$\beta_t$ 是否线性”的原因。
+下图把几种常见 schedule 放在同一坐标中比较。左图是单步噪声方差 $\beta_t$，中图是累计 signal power $\bar\alpha_t$，右图是 $\log_{10}\operatorname{SNR}_t$。同一条 schedule 在三种坐标下呈现完全不同的形状，这正是不能只看“$\beta_t$ 是否线性”的原因。
 
 ![不同 noise schedule 的单步方差、累计信号与 SNR 对比](/images/diffusion/d1_schedule_comparison.png)
 
