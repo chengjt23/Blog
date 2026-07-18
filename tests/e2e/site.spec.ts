@@ -30,7 +30,7 @@ test('desktop Home is empty and Blog titles open directly', async ({ page }) => 
   await page.screenshot({ path: 'artifacts/qa/blog-desktop.png', fullPage: true });
   await blogTitle.click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Schrödinger Bridge');
-  await expect(page.locator('.chapter-row')).toHaveCount(15);
+  await expect(page.locator('.chapter-row')).toHaveCount(5);
 });
 
 test('Diffusion Blog publishes all chapters with math, images, and direct navigation', async ({
@@ -68,32 +68,44 @@ test('Diffusion Blog publishes all chapters with math, images, and direct naviga
   );
 });
 
-test('chapter navigation, code tools, and dark theme work', async ({ page }) => {
+test('Bridge chapter navigation, math, images, and dark theme work', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto(pagePath('/blog/schrodinger-bridge/b5-schrodinger-bridge-entropic-ot/'));
+  await page.goto(pagePath('/blog/schrodinger-bridge/b2-how-exact-bridge-is-formed/'));
   await expect(page.locator('.series-rail')).toBeVisible();
   await expect(page.locator('.toc-rail')).toBeVisible();
-  expect(await page.locator('.katex-display').count()).toBeGreaterThanOrEqual(2);
-  await expect(page.locator('.article-content pre').first()).toBeVisible();
-  await expect(page.locator('.copy-code').first()).toHaveAttribute('aria-label', '复制代码');
+  expect(await page.locator('.katex-display').count()).toBeGreaterThanOrEqual(10);
+  await expect(page.locator('.article-content pre')).toHaveCount(0);
+
+  const images = page.locator('.article-content img');
+  for (let index = 0; index < (await images.count()); index += 1) {
+    const image = images.nth(index);
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        image.evaluate((node) => {
+          const imageNode = node as HTMLImageElement;
+          return imageNode.complete && imageNode.naturalWidth > 0;
+        }),
+      )
+      .toBe(true);
+  }
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  const codeColor = await page
-    .locator('.astro-code span')
-    .first()
+  const articleColor = await page
+    .locator('.article-content')
     .evaluate((node) => getComputedStyle(node).color);
-  expect(codeColor).not.toBe('rgb(36, 41, 46)');
+  expect(articleColor).not.toBe('rgb(36, 41, 46)');
   await page.screenshot({ path: 'artifacts/qa/chapter-dark-viewport.png' });
   await page.screenshot({ path: 'artifacts/qa/chapter-dark-desktop.png', fullPage: true });
 
   const next = page.getByRole('link', { name: /下一篇/ });
-  await expect(next).toHaveAttribute('href', /b6-stochastic-control/);
+  await expect(next).toHaveAttribute('href', /b3-how-exact-bridge-is-computed/);
 });
 
 test('mobile navigation and article layout do not overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(pagePath('/blog/schrodinger-bridge/b13-applications-and-evidence/'));
+  await page.goto(pagePath('/blog/schrodinger-bridge/b5-when-schrodinger-bridge-is-needed/'));
   await expect(page.locator('.mobile-series-nav')).toBeVisible();
   await expect(page.locator('.series-rail')).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -105,17 +117,6 @@ test('mobile navigation and article layout do not overflow', async ({ page }) =>
   expect(titleBox?.y ?? 0).toBeGreaterThanOrEqual((headerBox?.height ?? 0) - 1);
   await page.screenshot({ path: 'artifacts/qa/chapter-mobile-viewport.png' });
   await page.screenshot({ path: 'artifacts/qa/chapter-mobile.png', fullPage: true });
-});
-
-test('Mermaid diagrams render and retain fallback content', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(pagePath('/blog/schrodinger-bridge/b11-discrete-multimarginal-meanfield/'));
-  const shell = page.locator('[data-mermaid-shell]').first();
-  await expect(shell).toBeVisible();
-  await expect(shell.locator('svg')).toBeVisible({ timeout: 15_000 });
-  expect(
-    await shell.locator('svg').evaluate((svg) => svg.getBoundingClientRect().width),
-  ).toBeGreaterThan(200);
 });
 
 test('Pagefind returns Chinese and English technical results', async ({ page }) => {

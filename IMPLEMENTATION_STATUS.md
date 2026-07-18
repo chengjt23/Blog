@@ -8,15 +8,15 @@
 - Astro 7 / TypeScript strict / Node 24 / npm project and lockfile.
 - Four-environment publication and indexing policy.
 - Conservative allowlist/denylist and explicit dry-run/write sync modes.
-- Markdown AST transformation for 15 Bridge chapters.
-- Schrödinger Bridge B0-B14 is published as formal release v1.0 with `publishedAt` and `updatedAt` set to 2026-07-17.
+- Markdown AST transformation for 5 Bridge chapters.
+- Schrödinger Bridge B1-B5 is published as formal release v1.0 with `updatedAt` set to 2026-07-19.
 - Markdown AST transformation for the consolidated five-chapter Diffusion Blog, including public math-delimiter normalization and conservative research-link removal.
 - Diffusion D1-D5 is the only published Diffusion release; D0 and the previous D6-D13 publication routes and generated content are removed.
 - Relative source/output SHA-256 manifest covers both Blogs and only the currently published Diffusion assets.
 - Published figures have stable dimensions, alt text, captions, and automatic PNG dimension detection.
 - Internal status removal and source-note official URL mapping.
-- Core KaTeX conversion in B0, B2, B3, B5, B6, B9, and B12.
-- Mermaid rendering with no-JavaScript text fallback in B11 and B13.
+- Native KaTeX conversion for all Bridge display and inline formulas.
+- Mermaid rendering infrastructure remains available; the current five Bridge chapters do not require diagrams in Mermaid syntax.
 - Responsive three-column reading layout, mobile Blog navigation, system-driven light/dark themes, and code copy tools.
 - Header uses only the `R` letter mark on the left; navigation contains only Home and Blog on desktop and mobile.
 - Home is intentionally visually blank; Blog, Bridge, Diffusion, Privacy, License, Search, RSS, robots, and 404 routes are implemented.

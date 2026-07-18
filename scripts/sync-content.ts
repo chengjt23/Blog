@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
@@ -57,6 +57,10 @@ type GeneratedEntry = {
   outputSha256: string;
 };
 
+type GeneratedManifest = {
+  entries: GeneratedEntry[];
+};
+
 const siteRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const researchRoot = path.dirname(siteRoot);
 const contentRoot = path.join(siteRoot, 'src/content/series/schrodinger-bridge');
@@ -70,85 +74,27 @@ const routeByBasename = new Map(
   routes.chapters.map((chapter) => [path.basename(chapter.source), chapter]),
 );
 
-const coreMath: Record<string, Array<{ startsWith: string; latex: string }>> = {
-  'b0-schrodinger-problem-timeline': [
-    {
-      startsWith: 'p(X_t=z|X_0=x,X_T=y)',
-      latex: String.raw`\mathbb{P}(X_t=z\mid X_0=x,X_T=y)=\frac{r_{0,t}(x,z)\,r_{t,T}(z,y)}{r_{0,T}(x,y)}. \tag{2.1}`,
-    },
-    {
-      startsWith: 'P_0=mu_0',
-      latex: String.raw`P_0=\mu_0,\qquad P_T=\mu_T. \tag{2.2}`,
-    },
-  ],
-  'b2-path-space-schrodinger-problem': [
-    {
-      startsWith: 'minimize H(P|R)',
-      latex: String.raw`\min_{P}\ H(P\mid R)\quad\text{subject to}\quad P_0=\mu_0,\;P_T=\mu_T. \tag{1.1}`,
-    },
-    {
-      startsWith: 'H(P|R)\n = H(gamma|R_0T)',
-      latex: String.raw`H(P\mid R)=H(\gamma\mid R_{0T})+\int H(P^{xy}\mid R^{xy})\,\gamma(dx\,dy). \tag{4.1}`,
-    },
-  ],
-  'b3-static-schrodinger-system': [
-    {
-      startsWith: 'inf_{gamma in Pi(mu_0,mu_T)}',
-      latex: String.raw`\inf_{\gamma\in\Pi(\mu_0,\mu_T)} H(\gamma\mid R_{0T}). \tag{1.1}`,
-    },
-    {
-      startsWith: 'gamma*(i,j)=u_i R_ij v_j',
-      latex: String.raw`\gamma^*(i,j)=u_i\,R_{ij}\,v_j. \tag{1.2}`,
-    },
-  ],
-  'b5-schrodinger-bridge-entropic-ot': [
-    {
-      startsWith: 'inf_{gamma in Pi(mu_0,mu_T)} integral c(x,y)',
-      latex: String.raw`\inf_{\gamma\in\Pi(\mu_0,\mu_T)}\int c(x,y)\,\gamma(dx\,dy). \tag{1.1}`,
-    },
-    {
-      startsWith: 'inf { H(P|R) : P_0=mu_0',
-      latex: String.raw`\inf\left\{H(P\mid R):P_0=\mu_0,\;P_T=\mu_T\right\}. \tag{1.2}`,
-    },
-  ],
-  'b6-stochastic-control-girsanov-follmer': [
-    {
-      startsWith: 'minimize  H(P|R)',
-      latex: String.raw`\min_{P}\ H(P\mid R)\quad\text{subject to}\quad P_0=\mu_0,\;P_T=\mu_T. \tag{1.1}`,
-    },
-    {
-      startsWith: 'minimize  (1/2) E_P integral_0^T',
-      latex: String.raw`\min_u\ \frac{1}{2}\,\mathbb{E}_P\!\left[\int_0^T\lVert u_t\rVert^2\,dt\right]. \tag{1.2}`,
-    },
-  ],
-  'b9-bridge-matching-markovian-projection-imf': [
-    {
-      startsWith: 'Pi_gamma = integral Q^{xy}',
-      latex: String.raw`\Pi_\gamma=\int Q^{xy}\,\gamma(dx\,dy). \tag{1.1}`,
-    },
-    {
-      startsWith: 'b_M(t,x)=E[Y_t|X_t=x]',
-      latex: String.raw`b_M(t,x)=\mathbb{E}[Y_t\mid X_t=x]. \tag{3.1}`,
-    },
-  ],
-  'b12-diffusion-flow-matching-unification': [
-    {
-      startsWith: 's_t(x)=grad log p_t(x)',
-      latex: String.raw`s_t(x)=\nabla\log p_t(x)=\mathbb{E}\!\left[\nabla\log p_t(x\mid X_0)\mid X_t=x\right]. \tag{2.1}`,
-    },
-    {
-      startsWith: 'v_t(x)=f_t(x)-(g_t^2/2)s_t(x)',
-      latex: String.raw`v_t(x)=f_t(x)-\frac{g_t^2}{2}\,s_t(x). \tag{2.3}`,
-    },
-  ],
-};
-
-if (routes.chapters.length !== 15 || allowlist.sources.length !== 15) {
-  throw new Error('Bridge publication requires exactly 15 declared chapters.');
+if (routes.chapters.length !== 5 || allowlist.sources.length !== 5) {
+  throw new Error('Bridge publication requires exactly 5 declared chapters.');
+}
+if (allowlist.assets.length !== 11) {
+  throw new Error(
+    `Bridge publication requires exactly 11 assets, received ${allowlist.assets.length}.`,
+  );
 }
 
 for (const source of allowlist.sources) {
   if (!routeBySource.has(source)) throw new Error(`Allowlisted source has no route: ${source}`);
+}
+for (const chapter of routes.chapters) {
+  if (!allowlist.sources.includes(chapter.source)) {
+    throw new Error(`Route is not allowlisted: ${chapter.source}`);
+  }
+}
+for (const asset of allowlist.assets) {
+  const assetPath = path.join(researchRoot, asset);
+  assertInside(path.join(researchRoot, 'bridge/figures'), assetPath);
+  await readFile(assetPath);
 }
 
 function stripResearchHeader(source: string): string {
@@ -160,24 +106,52 @@ function stripResearchHeader(source: string): string {
   return lines.join('\n').trimEnd() + '\n';
 }
 
+function replaceInlineMathDelimiters(line: string): string {
+  return line
+    .split(/(`+[^`]*`+)/g)
+    .map((segment) =>
+      segment.startsWith('`') ? segment : segment.replace(/\\\(/g, '$').replace(/\\\)/g, '$'),
+    )
+    .join('');
+}
+
+function normalizeMathDelimiters(source: string): string {
+  let fence: '`' | '~' | undefined;
+  return source
+    .split(/\r?\n/)
+    .map((line) => {
+      const fenceMatch = line.match(/^\s*(```+|~~~+)/);
+      if (fenceMatch) {
+        const marker = fenceMatch[1][0] as '`' | '~';
+        fence = fence === marker ? undefined : (fence ?? marker);
+        return line;
+      }
+      if (fence) return line;
+      if (line.trim() === '\\[' || line.trim() === '\\]') {
+        return `${line.match(/^\s*/)?.[0] ?? ''}$$`;
+      }
+      return replaceInlineMathDelimiters(line);
+    })
+    .join('\n');
+}
+
+function replaceLinkWithText(
+  node: { children: unknown[] },
+  index: number,
+  parent: { children: unknown[] },
+): void {
+  parent.children[index] = {
+    type: 'text',
+    value: `${publicText(node.children)}（补充材料暂未公开）`,
+  };
+}
+
 async function transformMarkdown(chapter: Chapter, source: string): Promise<string> {
-  const tree = unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkMath)
-    .parse(stripResearchHeader(source));
+  const normalized = normalizeMathDelimiters(stripResearchHeader(source));
+  const tree = unified().use(remarkParse).use(remarkGfm).use(remarkMath).parse(normalized);
 
-  visit(tree, 'code', (node, index, parent) => {
-    if (node.lang !== 'text' || !parent || typeof index !== 'number') return;
-    const conversion = coreMath[chapter.slug]?.find(({ startsWith }) =>
-      node.value.trim().startsWith(startsWith),
-    );
-    if (conversion) parent.children[index] = { type: 'math', value: conversion.latex };
-  });
-
-  const pending: Promise<void>[] = [];
   visit(tree, 'image', (node) => {
-    if (node.url.startsWith('figures/')) {
+    if (/^(?:\.\/)?figures\//.test(node.url) || /^(?:\.\.\/)+bridge\/figures\//.test(node.url)) {
       node.url = `/images/bridge/${path.basename(node.url)}`;
       return;
     }
@@ -186,10 +160,12 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
     }
   });
 
+  const pending: Promise<void>[] = [];
   visit(tree, 'link', (node, index, parent) => {
-    if (/^(https?:|mailto:|#)/.test(node.url)) return;
+    if (/^(https?:|mailto:|#)/.test(node.url) || !parent || typeof index !== 'number') return;
 
-    const basename = path.basename(node.url.split('#')[0]);
+    const cleanUrl = node.url.split('#')[0];
+    const basename = path.basename(cleanUrl);
     const chapterTarget = routeByBasename.get(basename);
     if (chapterTarget) {
       const anchor = node.url.includes('#') ? `#${node.url.split('#')[1]}` : '';
@@ -197,37 +173,29 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
       return;
     }
 
-    if (node.url.startsWith('../references/notes/bridge/')) {
+    if (/^(?:\.\.\/)+references\/notes\/(?:sources|bridge)\//.test(cleanUrl)) {
       pending.push(
         (async () => {
           const notePath = path.resolve(
             path.dirname(path.join(researchRoot, chapter.source)),
-            node.url,
+            cleanUrl,
           );
-          assertInside(path.join(researchRoot, 'references/notes/bridge'), notePath);
+          assertInside(path.join(researchRoot, 'references/notes'), notePath);
           const note = await readFile(notePath, 'utf8');
           const officialUrl = extractOfficialUrl(note);
           if (officialUrl) {
             node.url = officialUrl;
             node.title = '官方论文页面';
-          } else if (parent && typeof index === 'number') {
-            parent.children[index] = { type: 'text', value: publicText(node.children) };
+          } else {
+            replaceLinkWithText(node, index, parent);
           }
         })(),
       );
       return;
     }
 
-    if (
-      node.url.startsWith('../references/notes/derivations/') ||
-      node.url.startsWith('../references/code/')
-    ) {
-      if (parent && typeof index === 'number') {
-        parent.children[index] = {
-          type: 'text',
-          value: `${publicText(node.children)}（补充材料暂未公开）`,
-        };
-      }
+    if (/^(?:\.\.\/)+references\//.test(cleanUrl)) {
+      replaceLinkWithText(node, index, parent);
       return;
     }
 
@@ -241,12 +209,7 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
     .use(remarkStringify, { bullet: '-', fences: true, listItemIndent: 'one' })
     .stringify(tree);
 
-  const publicBody = body
-    .replace(/`?formal_draft_complete_v0\.1`?/g, '正式版 v1.0')
-    .replace(/`?source_verified_bounded`?/g, '已完成有界范围的来源核验')
-    .replace(/`?source_verified`?/g, '已完成来源核验');
-
-  return matter.stringify(publicBody, {
+  return matter.stringify(body, {
     title: chapter.title,
     description: chapter.description,
     publishedAt: routes.release.publishedAt,
@@ -270,14 +233,23 @@ async function transformMarkdown(chapter: Chapter, source: string): Promise<stri
 }
 
 const generated: GeneratedEntry[] = [];
-for (const chapter of routes.chapters.sort((a, b) => a.order - b.order)) {
-  if (!allowlist.sources.includes(chapter.source)) {
-    throw new Error(`Route is not allowlisted: ${chapter.source}`);
-  }
+const referencedAssets = new Set<string>();
+for (const chapter of [...routes.chapters].sort((a, b) => a.order - b.order)) {
   const sourcePath = path.join(researchRoot, chapter.source);
   const outputPath = path.join(contentRoot, `${chapter.slug}.md`);
   assertInside(contentRoot, outputPath);
   const source = await readFile(sourcePath, 'utf8');
+
+  for (const match of source.matchAll(
+    /!\[[^\]]*\]\((?:(?:\.\/)?figures\/|(?:\.\.\/)+bridge\/figures\/)([^)\s]+)[^)]*\)/g,
+  )) {
+    const asset = `bridge/figures/${match[1]}`;
+    if (!allowlist.assets.includes(asset)) {
+      throw new Error(`${chapter.source}: image is not allowlisted: ${asset}`);
+    }
+    referencedAssets.add(asset);
+  }
+
   const output = await transformMarkdown(chapter, source);
   generated.push({
     source: chapter.source,
@@ -290,6 +262,11 @@ for (const chapter of routes.chapters.sort((a, b) => a.order - b.order)) {
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, output, 'utf8');
   }
+}
+
+if (referencedAssets.size !== allowlist.assets.length) {
+  const unreferenced = allowlist.assets.filter((asset) => !referencedAssets.has(asset));
+  throw new Error(`Bridge allowlist contains unreferenced assets: ${unreferenced.join(', ')}`);
 }
 
 for (const asset of allowlist.assets) {
@@ -309,26 +286,76 @@ for (const asset of allowlist.assets) {
   }
 }
 
-const generatedManifest = {
-  version: 1,
-  transformerVersion: '1.1.0',
-  allowlistVersion: allowlist.version,
-  routeManifestVersion: routes.version,
-  entries: generated,
-};
-
 if (writeMode) {
+  const expectedContentFiles = new Set(routes.chapters.map((chapter) => `${chapter.slug}.md`));
+  for (const name of await readdir(contentRoot)) {
+    if (!name.endsWith('.md') || expectedContentFiles.has(name)) continue;
+    const stalePath = path.join(contentRoot, name);
+    assertInside(contentRoot, stalePath);
+    await rm(stalePath, { force: true });
+  }
+
+  const expectedAssetFiles = new Set(allowlist.assets.map((asset) => path.basename(asset)));
+  for (const name of await readdir(assetRoot)) {
+    if (expectedAssetFiles.has(name)) continue;
+    const stalePath = path.join(assetRoot, name);
+    assertInside(assetRoot, stalePath);
+    await rm(stalePath, { force: true });
+  }
+
+  let existingEntries: GeneratedEntry[] = [];
+  let staleBridgeEntries: GeneratedEntry[] = [];
+  try {
+    const existing = await readJson<GeneratedManifest>(
+      path.join(siteRoot, 'generated-manifest.json'),
+    );
+    staleBridgeEntries = existing.entries.filter(
+      (entry) =>
+        entry.output.startsWith('src/content/series/schrodinger-bridge/') ||
+        entry.output.startsWith('public/images/bridge/'),
+    );
+    existingEntries = existing.entries.filter(
+      (entry) =>
+        !entry.output.startsWith('src/content/series/schrodinger-bridge/') &&
+        !entry.output.startsWith('public/images/bridge/'),
+    );
+  } catch {
+    existingEntries = [];
+  }
+
+  const currentOutputs = new Set(generated.map((entry) => entry.output));
+  for (const stale of staleBridgeEntries) {
+    if (currentOutputs.has(stale.output)) continue;
+    const stalePath = path.join(siteRoot, stale.output);
+    if (stale.output.startsWith('src/content/series/schrodinger-bridge/')) {
+      assertInside(contentRoot, stalePath);
+    } else if (stale.output.startsWith('public/images/bridge/')) {
+      assertInside(assetRoot, stalePath);
+    } else {
+      continue;
+    }
+    await rm(stalePath, { force: true });
+  }
+
+  const entries = [...existingEntries, ...generated];
+  const generatedManifest = {
+    version: 2,
+    transformerVersion: '2.0.0',
+    allowlistVersion: allowlist.version,
+    routeManifestVersion: routes.version,
+    entries,
+  };
   await writeFile(
     path.join(siteRoot, 'generated-manifest.json'),
     JSON.stringify(generatedManifest, null, 2) + '\n',
     'utf8',
   );
   console.log(
-    `Generated ${routes.chapters.length} chapters and ${allowlist.assets.length} assets.`,
+    `Generated ${routes.chapters.length} Bridge chapters and ${allowlist.assets.length} assets; manifest now contains ${entries.length} entries.`,
   );
 } else {
   console.log(
-    `Dry run: ${routes.chapters.length} chapters and ${allowlist.assets.length} assets are ready.`,
+    `Dry run: ${routes.chapters.length} Bridge chapters and ${allowlist.assets.length} assets are ready.`,
   );
-  console.log('Run npm run sync-content:write to update publication outputs.');
+  console.log('Run npm run sync-content:write to update all publication outputs.');
 }
