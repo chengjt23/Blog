@@ -1,6 +1,6 @@
 ---
-title: 精确 Bridge 怎样被计算出来
-description: 从边缘缩放与 KL 投影出发，解释 IPF、Sinkhorn、可行性和稳定计算。
+title: 这个解怎样变成一条可计算的随机过程
+description: 让端点 factors 沿参考过程传播，并说明 Doob transform、控制解释与 IPF/Sinkhorn 如何落地。
 publishedAt: '2026-07-17'
 updatedAt: '2026-07-19'
 draft: false
@@ -11,7 +11,7 @@ slug: b3-how-exact-bridge-is-computed
 tags:
   - schrodinger-bridge
   - sinkhorn
-  - ipf
+  - stochastic-control
 authors:
   - chengjt23
 license: all-rights-reserved
@@ -21,65 +21,218 @@ toc: true
 featured: false
 includeInFeed: false
 indexable: true
-scope: 聚焦 exact I-projection、cyclic IPF、support 条件、log-domain stabilization 与停止准则。
+scope: 聚焦 forward/reverse dynamics、随机控制、边缘缩放、support 条件与 log-domain stabilization。
 ---
-第二章得到有限状态下的精确结构：
+第二章得到的端点耦合有一个很简洁的形状：参考耦合在起点和终点两侧各乘一个因子。这个“左右缩放”很容易被误解成纯粹的矩阵技巧，其实它同时决定了中间每个时刻的分布、前向与反向动力学，以及最终使用什么算法求解。
 
-$$
-\gamma^*_{ij}
-=
-u_iQ_{ij}v_j,
-$$
+从端点 factors 到一条可采样的随机过程，中间没有新的模型假设。所需的只是让这两个因子沿参考动力学传播。
 
-其中 $Q=(Q_{ij})$ 是 reference endpoint coupling，$u=(u_i)$、$v=(v_j)$ 是需要满足目标 marginals $\mu,\nu$ 的 Schrödinger factors。它们服从
+## 1. 端点因子会沿参考过程传播
 
-$$
-u_i(Qv)_i=\mu_i,
-\qquad
-v_j(Q^\top u)_j=\nu_j.
-$$
-
-这组方程已经给出解的形状，却没有直接给出 $u,v$。计算的核心观察非常简单：固定一个 factor 后，另一个 factor 可以由对应的 marginal constraint 直接解出。于是
+把第二章有限状态中的 $u_i,v_j$ 写到一般状态空间上。设 $f_0(x)$ 是只依赖初始状态的正函数，$g_T(y)$ 是只依赖终止状态的正函数。最优路径律相对于参考路径律 $R$ 的密度具有形式
 
 $$
 \boxed{
-u\leftarrow
-\frac{\mu}{Qv},
-\qquad
-v\leftarrow
-\frac{\nu}{Q^\top u},
+\frac{dP^*}{dR}
+=
+\frac{f_0(X_0)g_T(X_T)}{Z},
 }
 $$
 
-其中除法逐分量进行。反复交替这两步，就是有限状态下的 IPF/Sinkhorn scaling。
+其中 $Z>0$ 是归一化常数。把常数乘到 $f_0$ 再从 $g_T$ 中除掉，不会改变 $P^*$；这正是有限状态 factors 的尺度自由度。
 
-可靠的 Bridge solver 还必须说明：half-step 为什么是精确 KL projection、循环何时收敛、reference 有 zeros 时是否可行，以及小 regularization 下怎样避免数值下溢。
-
-## 1. 1940—2015：一次 marginal correction 为什么是精确 I-projection
-
-先忘掉 factors，只看一张当前 coupling $Q=(Q_{ij})$。假设它严格为正并已归一化。现在只要求新的 coupling $P=(P_{ij})$ 具有目标 row marginal $\mu$：
+现在让两个端点函数随参考过程传播。对任意时刻 $t\in[0,T]$，定义
 
 $$
-\mathcal C_\mu
+g_t(x)
 =
-\left\{
-P\ge0:
-\sum_jP_{ij}=\mu_i
-\right\}.
+\mathbb E_R
+\left[
+g_T(X_T)\mid X_t=x
+\right],
 $$
 
-按正确的 KL 方向对当前 coupling 做 information projection：
+$$
+f_t(x)
+=
+\mathbb E_R
+\left[
+f_0(X_0)\mid X_t=x
+\right].
+$$
+
+$g_t$ 把终端信息向较早时刻传回，$f_t$ 把初始信息向较晚时刻传去。若参考过程在时刻 $t$ 的密度记为 $r_t(x)$，最优过程的密度便是
 
 $$
 \boxed{
+p_t(x)
+=
+\frac{r_t(x)f_t(x)g_t(x)}{Z}.
+}
+$$
+
+这个乘积公式值得多看一眼。边界条件不是只在 $t=0,T$ 两个时刻起作用；它们经参考过程传播后，在每一个中间时刻共同改变概率质量。
+
+## 2. 同一对势函数决定前向和反向动力学
+
+若 $R$ 是 Markov process，终端势函数 $g_t$ 会直接改变前向 transition kernel。对 $0\le s<t\le T$，记 $R_{s,t}(x,dy)$ 为参考过程从 $x$ 转移到 $dy$ 的 kernel，则
+
+$$
+\boxed{
+P^*_{s,t}(x,dy)
+=
+R_{s,t}(x,dy)
+\frac{g_t(y)}{g_s(x)}.
+}
+$$
+
+由于
+
+$$
+g_s(x)
+=
+\int
+g_t(y)R_{s,t}(x,dy),
+$$
+
+右侧自动归一化。这就是 Doob transform：它没有改变可走的参考路径，只重新分配了这些路径的概率。反向 transition kernel 则由 $f_t$ 作对称的变换。
+
+在 smooth diffusion 情形，设参考过程满足
+
+$$
+dX_t
+=
+b_t(X_t)\,dt
++
+\sigma_t(X_t)\,dW_t,
+\qquad
+a_t=\sigma_t\sigma_t^\top,
+$$
+
+其中 $b_t$ 是参考漂移，$\sigma_t$ 是扩散系数，$a_t$ 是 diffusion matrix，$W_t$ 是标准 Brownian motion。若 $g_t$ 足够光滑且为正，最优前向漂移为
+
+$$
+\boxed{
+b_t^{*,+}(x)
+=
+b_t(x)
++
+a_t(x)\nabla\log g_t(x).
+}
+$$
+
+采用反向时间参数时，反向漂移相对于参考反向漂移的修正由
+
+$$
+a_t(x)\nabla\log f_t(x)
+$$
+
+给出。前向与反向模型不是两套独立生成器，它们是同一条路径律 $P^*$ 的两种条件表示。
+
+Jamison 在 1974 年论文 [*Reciprocal Processes*](https://doi.org/10.1007/BF00532864 "官方论文页面") 中说明，任意参考条件桥的端点 mixture 都保留双侧条件结构，因此通常是 reciprocal process；但任意 mixture 未必 Markov。乘法密度 $f_0(X_0)g_T(X_T)$ 正是最优 mixture 在相应 positivity 条件下重新成为 Markov process 的关键。
+
+![Reciprocal endpoint mixture 与 Markov factorization](/images/bridge/B4_reciprocal_markov.png)
+
+这个区别不是术语洁癖。只匹配每个时刻的边缘分布，可能已经足够生成快照；要恢复 transition kernel 和完整路径律，却必须保留更强的结构。
+
+## 3. 路径空间 KL 也可以读成控制能量
+
+前向漂移多出的
+
+$$
+a_t\nabla\log g_t
+$$
+
+不只是 Doob transform 的结果，也是一条最小能量控制。
+
+仍以参考 diffusion 为起点。设候选过程保持同一个扩散通道，只把漂移改为
+
+$$
+b_t(X_t)+a_t(X_t)\beta_t,
+$$
+
+其中 $\beta_t$ 是适应于当前信息的控制场。在 absolute continuity 与 finite-energy 条件下，Girsanov/Föllmer theory 给出
+
+$$
+\boxed{
+\operatorname{KL}(P\Vert R)
+=
+\operatorname{KL}(P_0\Vert R_0)
++
+\frac12
+\mathbb E_P
+\int_0^T
+\beta_t^\top
+a_t(X_t)
+\beta_t
+\,dt.
+}
+$$
+
+若参考初始分布已经等于目标 $\mu_0$，第一项为零。最小化路径空间 KL 于是等价于：在所有能把 $\mu_0$ 驱动到 $\mu_T$ 的控制中，选择二次能量最小者。
+
+对扩散强度为 $\varepsilon$ 的 Brownian reference，有 $a_t=\varepsilon I$。若用实际漂移修正 $u_t=\varepsilon\beta_t$，上式变为
+
+$$
+\operatorname{KL}(P\Vert R)
+=
+\frac1{2\varepsilon}
+\mathbb E_P
+\int_0^T
+\|u_t\|^2\,dt.
+$$
+
+最优控制正是
+
+$$
+\boxed{
+u_t^*(x)
+=
+\varepsilon\nabla\log g_t(x).
+}
+$$
+
+Lehec 在 2013 年论文 [*Representation Formula for the Entropy and Functional Inequalities*](https://doi.org/10.1214/11-AIHP464 "官方论文页面") 中严格讨论了 Wiener-space entropy 与 canonical Föllmer drift。Chen、Georgiou 与 Pavon 在 2021 年综述 [*Stochastic Control Liaisons: Richard Sinkhorn Meets Gaspard Monge on a Schrödinger Bridge*](https://doi.org/10.1137/20M1339982 "官方论文页面") 中，则系统连接了 Schrödinger system、stochastic control 与 transport。
+
+这里的限制必须说清楚：KL 与控制能量的等式只覆盖能够通过同一扩散通道改变测度的过程。若漂移修正不在 $\operatorname{Range}(\sigma_t)$ 中，或者 martingale problem 不适定，不能机械套用这条公式。
+
+## 4. 精确计算就是交替修正两个边缘
+
+动力学公式告诉我们解是什么样，仍没有直接给出端点 factors。回到有限状态矩阵 $Q=(Q_{ij})$，目标边缘写成 $\mu,\nu$，需要求
+
+$$
+\gamma^*
+=
+\operatorname{diag}(u)
+Q
+\operatorname{diag}(v)
+$$
+
+使其行和等于 $\mu$、列和等于 $\nu$。固定 $v$ 时，$u$ 可由行约束直接解出；固定 $u$ 时，$v$ 可由列约束解出：
+
+$$
+\boxed{
+u\leftarrow\frac{\mu}{Qv},
+\qquad
+v\leftarrow\frac{\nu}{Q^\top u},
+}
+$$
+
+其中除法逐分量进行。交替重复这两步，就是有限状态下的 IPF/Sinkhorn scaling。
+
+这两行更新之所以可靠，不只是因为 residual 通常会下降。设当前耦合为 $Q$，只要求新耦合 $P$ 具有目标行边缘 $\mu$。正确的 information projection 是
+
+$$
 P^*
 =
-\arg\min_{P\in\mathcal C_\mu}
+\arg\min_{\substack{
+P\ge0\\
+\sum_jP_{ij}=\mu_i
+}}
 \operatorname{KL}(P\Vert Q).
-}
 $$
 
-按行引入 Lagrange multipliers。Stationarity condition 说明，同一行中的所有 entries 只能乘上同一个常数，因此
+它的闭式解是
 
 $$
 \boxed{
@@ -90,141 +243,23 @@ Q_{ij}
 }
 $$
 
-它只是把第 $i$ 行整体缩放到目标质量 $\mu_i$，并保留该行内部的 conditional distribution：
+整行被乘上同一个常数，所以给定起点后的条件分布保持不变。列修正完全对称。一次 half-step 只满足一侧边缘；一次完整 cycle 也通常还没有到 fixed point。
+
+对任何同时满足两侧边缘的可行耦合 $P$，精确 half-step 满足 KL Pythagorean identity：
 
 $$
-\frac{P^*_{ij}}{\mu_i}
-=
-\frac{Q_{ij}}{\sum_kQ_{ik}}.
-$$
-
-所以一次 row scaling 的统计含义是：替换起点 marginal，同时保留“给定起点后终点怎样分布”的 conditional law。Column scaling 完全对称。
-
-Csiszár 与 Shields 在 2004 年教程 [*Information Theory and Statistics: A Tutorial*](https://doi.org/10.1561/0100000004 "官方论文页面") 中系统整理了 finite I-projection 与 cyclic projection；Benamou、Carlier、Cuturi、Nenna 与 Peyré 在 2015 年论文 [*Iterative Bregman Projections for Regularized Transportation Problems*](https://doi.org/10.1137/141000439 "官方论文页面") 中，则把同一 projection geometry 用于一类 regularized transport constraints。
-
-KL 的方向不能反转。Scaling 解的是
-
-$$
-\operatorname{KL}(\text{new}\Vert\text{old})
-$$
-
-的 projection；最小化 $\operatorname{KL}(\text{old}\Vert\text{new})$ 不会导出相同的乘法更新。
-
-## 2. 1967—2004：为什么两个 half-steps 能收敛到共同约束
-
-一次 row projection 只保证 row marginal；紧接着进行 column projection 时，rows 通常会再次偏离。因此必须区分：
-
-$$
-\text{one half-step}
-\ne
-\text{one full cycle}
-\ne
-\text{exact fixed point}.
-$$
-
-设 $Q^{(0)}=Q$。一次完整 cycle 可以写成
-
-$$
-Q^{(2n+1)}
-=
-\operatorname{Proj}_{\mathcal C_\mu}^{\mathrm{KL}}
-\left(
-Q^{(2n)}
-\right),
-$$
-
-$$
-Q^{(2n+2)}
-=
-\operatorname{Proj}_{\mathcal C_\nu}^{\mathrm{KL}}
-\left(
-Q^{(2n+1)}
-\right),
-$$
-
-其中 $\mathcal C_\nu$ 是具有目标 column marginal $\nu$ 的集合。
-
-对任意同时满足 rows 与 columns 的 feasible coupling $P$，一次 exact half-step 满足 KL Pythagorean identity：
-
-$$
-\boxed{
 \operatorname{KL}(P\Vert Q_{\mathrm{old}})
 =
 \operatorname{KL}(P\Vert Q_{\mathrm{new}})
 +
 \operatorname{KL}(Q_{\mathrm{new}}\Vert Q_{\mathrm{old}}).
-}
 $$
 
-最后一项非负，因此每次 projection 都消耗一部分相对于可行解的 KL gap。对有限 affine marginal families，在 intersection 非空且初始 reference 为正等条件下，cyclic I-projections 收敛到唯一 joint projection：
+最后一项非负，每次投影都会消耗一部分相对于可行解的 KL gap。Csiszár 与 Shields 在 2004 年教程 [*Information Theory and Statistics: A Tutorial*](https://doi.org/10.1561/0100000004 "官方论文页面") 中系统整理了 finite I-projection 与 cyclic projection；Benamou、Carlier、Cuturi、Nenna 与 Peyré 在 2015 年论文 [*Iterative Bregman Projections for Regularized Transportation Problems*](https://doi.org/10.1137/141000439 "官方论文页面") 中把这套几何用于 regularized transport constraints。
 
-$$
-\boxed{
-Q^{(k)}
-\longrightarrow
-\arg\min_{P\in\mathcal C_\mu\cap\mathcal C_\nu}
-\operatorname{KL}(P\Vert Q).
-}
-$$
+Fortet 1940 年的 successive approximations 是连续 Schrödinger system 的早期迭代路线；Sinkhorn 与 Knopp 在 1967 年论文 [*Concerning Nonnegative Matrices and Doubly Stochastic Matrices*](https://doi.org/10.2140/pjm.1967.21.343 "官方论文页面") 中研究了非负矩阵 scaling 与 support 条件。今天常说的 Sinkhorn algorithm，实际汇合了这些不同来源。
 
-这就是 IPF 收敛到 Schrödinger coupling 的几何原因。它不是因为 row residual 与 column residual “看起来越来越小”，而是因为每个 half-step 都是相对熵意义下的精确投影。
-
-Sinkhorn 与 Knopp 在 1967 年论文 [*Concerning Nonnegative Matrices and Doubly Stochastic Matrices*](https://doi.org/10.2140/pjm.1967.21.343 "官方论文页面") 中研究 nonnegative square matrices 的 scaling 与 support conditions。现代文献常把上述更新统称为 Sinkhorn algorithm，但历史责任需要分开：Sinkhorn–Knopp 主要承担 matrix support theorem，general marginal I-projection 与 cyclic convergence 由 information-projection 文献承担。
-
-Factors 仍然具有 gauge freedom：
-
-$$
-(u,v)
-\mapsto
-(cu,c^{-1}v),
-\qquad c>0.
-$$
-
-因此 $u,v$ 的绝对数值可能持续漂移，而 coupling
-
-$$
-\operatorname{diag}(u)Q\operatorname{diag}(v)
-$$
-
-已经收敛。判断算法时应检查 coupling 与 marginals，而不能只比较 factors 的范数。
-
-## 3. 1940—2021：从 finite scaling 到 path-space IPF
-
-Fortet 在 1940 年论文 Résolution d'un système d'équations de M. Schrödinger（补充材料暂未公开） 中从连续 Schrödinger system 构造 successive approximations，是 alternating-factor 思想的重要来源，但尚未使用现代 matrix scaling 或 KL projection 语言。
-
-Finite IPF 的 path-space 版本更能显示 Bridge 的本质。令初始 path law 为
-
-$$
-P^{(0)}=R.
-$$
-
-随后交替满足终端与初始约束：
-
-$$
-\boxed{
-P^{(2n+1)}
-=
-\arg\min_{P_T=\mu_T}
-\operatorname{KL}
-\left(
-P\Vert P^{(2n)}
-\right),
-}
-$$
-
-$$
-\boxed{
-P^{(2n+2)}
-=
-\arg\min_{P_0=\mu_0}
-\operatorname{KL}
-\left(
-P\Vert P^{(2n+1)}
-\right).
-}
-$$
-
-一次 terminal half-bridge update 有闭式结构。若当前 law 是 $Q$，其 terminal marginal 为 $Q_T$，则
+路径空间中的 half-step 具有同样含义。若当前路径律为 $Q$，终端边缘为 $Q_T$，把终端边缘替换为 $\mu_T$ 的精确投影满足
 
 $$
 \boxed{
@@ -234,115 +269,56 @@ $$
 }
 $$
 
-这个 density ratio 只依赖终点，因此新的 path law 把 terminal marginal 换成 $\mu_T$，同时保留给定 $X_T$ 后的 conditional path law。Initial half-step 则使用对应的 $X_0$ density ratio。
+这个密度比只依赖终点，所以给定 $X_T$ 后的条件路径律保持不变。下一步再对初始边缘作同样修正，便得到 path-space IPF。
 
-这与 finite row/column scaling 是同一个操作：
+## 5. 零值和数值稳定性不是实现细节
 
-$$
-\text{replace one marginal}
-+
-\text{preserve the corresponding conditional law}.
-$$
+若参考矩阵中的 $Q_{ij}=0$，任何对 $Q$ 具有有限 KL 的候选耦合都不能在该位置放置正质量。这个零值表示参考模型禁止相应迁移，不是可以随手加一个小常数抹掉的数值瑕疵。
 
-当 path law 是 Markov diffusion 时，每次 half-step 也可以重新表示为反向或前向 dynamics；但“可以表示”不等于“已经能够高效计算”。Path-space IPF 仍可能要求 transition densities、conditional expectations 或大量路径样本，真正的高维困难正是在这里出现。
-
-Cuturi 在 NeurIPS 2013 论文 Sinkhorn Distances: Lightspeed Computation of Optimal Transport（补充材料暂未公开） 中推动了 Gibbs kernel scaling 在大规模 entropic transport 中的应用，但这不构成任意 path-space IPF 的统一复杂度结论。
-
-## 4. 1967—2019：structural zeros、support 与 feasibility 为什么不能忽略
-
-严格正 kernel 是最友好的情况。若 $Q_{ij}=0$，relative entropy 会禁止 candidate 在该位置放置正质量，因此 zero pattern 是可行集的一部分，而不是普通数值细节。
-
-对 square nonnegative matrix，Sinkhorn–Knopp 理论区分三个条件：
-
-| 条件                   | 含义                                        | 主要结论                                                   |
-| -------------------- | ----------------------------------------- | ------------------------------------------------------ |
-| support              | 至少存在一条 positive diagonal                  | alternating normalization 可收敛到 doubly stochastic limit |
-| total support        | 每个 positive entry 都位于某条 positive diagonal | limit 可由 positive diagonal scaling 得到                  |
-| fully indecomposable | 不能通过 permutation 分成相应 block form          | scaling factors 除 gauge 外唯一                            |
-
-这三个条件不能互换。Scaled matrix 的唯一性、factors 的唯一性和迭代是否保留所有原 positive entries，也是不同结论。
-
-一般的目标 marginals 还需要满足 support compatibility。例如 diagonal reference 强迫质量只能沿 diagonal 移动；若目标 row 与 column masses 互换，就不存在可行 coupling。算法仍可能让刚更新的一侧 residual 暂时为零，却无法同时满足两端。
-
-所以 stopping criterion 必须同时检查两个 marginals。只检查刚刚更新的一侧，会把 infeasible oscillation 误判为收敛。
+Sinkhorn–Knopp 理论区分 support、total support 与 fully indecomposable。它们分别影响是否存在 doubly stochastic limit、是否能由正对角 scaling 得到，以及 factors 是否除尺度外唯一。一般目标边缘还要与参考 support 相容；例如对角参考矩阵不允许质量跨状态移动，目标边缘若要求交换质量，问题本身就不可行。
 
 ![Positive scaling、structural zeros 与 infeasible support](/images/bridge/B7_sinkhorn_diagnostics.png)
 
-## 5. 2013—2019：为什么稳定实现必须进入理论主线
-
-Entropic OT 常使用 Gibbs kernel
+另一类零值来自浮点数。Entropic OT 常使用 Gibbs kernel
 
 $$
 K_{ij}
 =
-\exp\!\left(
--\frac{C_{ij}}{\varepsilon}
-\right),
+\exp\!\left(-\frac{C_{ij}}{\varepsilon}\right),
 $$
 
-其中 $C_{ij}$ 是 transport cost，$\varepsilon>0$ 是 regularization scale。数学上只要 $C_{ij}<\infty$，就有 $K_{ij}>0$。但在 float64 中，当 $C_{ij}/\varepsilon$ 过大，正数会 underflow 成机器零。
+其中 $C_{ij}$ 是 transport cost，$\varepsilon>0$ 是 entropy scale。数学上，只要 $C_{ij}<\infty$，就有 $K_{ij}>0$；数值上，当 $C_{ij}/\varepsilon$ 很大时，float64 会把它下溢成零。
 
-这会把 numerical conditioning 错误地伪装成 structural-zero problem。Naive scaling 可能出现 division by zero、nonfinite factors，甚至错误地宣称目标 marginals 不可行。
-
-稳定做法是转入 log-domain。写
+稳定实现通常写
 
 $$
-u_i
-=
-\exp\!\left(
-\frac{\alpha_i}{\varepsilon}
-\right),
+u_i=\exp\!\left(\frac{\alpha_i}{\varepsilon}\right),
 \qquad
-v_j
-=
-\exp\!\left(
-\frac{\beta_j}{\varepsilon}
-\right).
+v_j=\exp\!\left(\frac{\beta_j}{\varepsilon}\right),
 $$
 
-则 coupling 的 log-density 为
+并在 log-domain 中计算
 
 $$
 \log\gamma_{ij}
 =
-\frac{
-\alpha_i+\beta_j-C_{ij}
-}{\varepsilon}.
+\frac{\alpha_i+\beta_j-C_{ij}}{\varepsilon}.
 $$
 
-Scaling updates 随后用 $\operatorname{logsumexp}$ 计算 row 与 column normalizers，而不直接形成 $K_{ij}$。
+行列归一化由 $\operatorname{logsumexp}$ 完成，不再直接形成极小的 $K_{ij}$。Cuturi 在 NeurIPS 2013 论文 Sinkhorn Distances: Lightspeed Computation of Optimal Transport（补充材料暂未公开） 中推动了 Gibbs kernel scaling 的大规模应用；Schmitzer 在 2019 年论文 [*Stabilized Sparse Scaling Algorithms for Entropy Regularized Transport Problems*](https://doi.org/10.1137/16M1106018 "官方论文页面") 中系统讨论了 absorption、stabilization 与 sparse scaling。
 
-$\operatorname{logsumexp}$ 先减去最大值再求 exponentials，避免直接构造极小 kernel。Schmitzer 在 2019 年论文 [*Stabilized Sparse Scaling Algorithms for Entropy Regularized Transport Problems*](https://doi.org/10.1137/16M1106018 "官方论文页面") 中系统讨论 absorption、stabilization 与 sparse scaling。
+Log-domain 只能避免数值下溢，不能修复真实的 support 不可行，也不会自动改善问题的 conditioning。我不会信任一个只展示漂亮样本的 Bridge solver；至少还应看到两侧 marginal residual、objective 或 dual gap，以及明确的 iteration budget。
 
-Log-domain 解决的是数值范围，不会自动改善问题本身的 conditioning，也不能修复真正 infeasible 的 support。类似地，epsilon scaling 是 continuation strategy，不是无需条件的 convergence-rate theorem。
+## 文献索引
 
-一个可靠实现至少要分别报告 row residual、column residual、objective 或 dual gap 以及 iteration budget。Marginal residual 只能说明 constraints 的满足程度，不等于 objective gap；有限迭代达到小 residual，也不等于已经证明 exact fixed point。
-
-现在可以回答本章标题：
-
-> 精确 Bridge 的计算从两个交替的 KL I-projections 开始：每个 half-step 替换一个 marginal 并保留相应 conditional law；在可行、正则和稳定计算的条件下，完整迭代循环收敛到 Schrödinger system 的共同 fixed point。
-
-整条计算链是
-
-$$
-\text{Schrödinger factors}
-\longrightarrow
-\text{marginal I-projections}
-\longrightarrow
-\text{cyclic IPF}
-\longrightarrow
-\text{support audit}
-\longrightarrow
-\text{stable arithmetic}.
-$$
-
-## 本章论文索引
-
-| 时间   | 论文                                                                                      | 本章中的作用                                                              |
-| ---- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 1940 | Fortet, *Résolution d'un système d'équations de M. Schrödinger*                         | 建立连续 Schrödinger system 的 fixed-point 与 successive-approximation 路线 |
-| 1967 | Sinkhorn & Knopp, *Concerning Nonnegative Matrices and Doubly Stochastic Matrices*      | 给出 nonnegative matrix scaling 的 support 条件                          |
-| 2004 | Csiszár & Shields, *Information Theory and Statistics: A Tutorial*                      | 系统整理 finite I-projection、Pythagorean identity 与 cyclic convergence  |
-| 2013 | Cuturi, *Sinkhorn Distances*                                                            | 推动 Gibbs kernel scaling 在大规模 entropic transport 中的应用                |
-| 2015 | Benamou et al., *Iterative Bregman Projections for Regularized Transportation Problems* | 将 marginal scaling 表述为 Bregman projections                          |
-| 2019 | Schmitzer, *Stabilized Sparse Scaling Algorithms...*                                    | 给出 log-domain stabilization、absorption 与 sparse scaling 路线          |
+| 时间   | 论文                                                                                      | 本章采用的内容                                                    |
+| ---- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 1940 | Fortet, *Résolution d'un système d'équations de M. Schrödinger*                         | 连续 Schrödinger system 的 successive approximations          |
+| 1967 | Sinkhorn & Knopp, *Concerning Nonnegative Matrices and Doubly Stochastic Matrices*      | 非负矩阵 scaling 的 support 条件                                  |
+| 1974 | Jamison, *Reciprocal Processes*                                                         | 连接 endpoint factorization、reciprocal structure 与 Markovity |
+| 2004 | Csiszár & Shields, *Information Theory and Statistics: A Tutorial*                      | 整理 finite I-projection 与 cyclic convergence                |
+| 2013 | Cuturi, *Sinkhorn Distances*                                                            | 推动 Gibbs kernel scaling 的大规模应用                             |
+| 2013 | Lehec, *Representation Formula for the Entropy and Functional Inequalities*             | 给出 Wiener entropy 与 Föllmer drift 的能量表示                    |
+| 2015 | Benamou et al., *Iterative Bregman Projections for Regularized Transportation Problems* | 将边缘 scaling 表述为 Bregman projections                        |
+| 2019 | Schmitzer, *Stabilized Sparse Scaling Algorithms...*                                    | 给出 log-domain stabilization 与 sparse scaling               |
+| 2021 | Chen, Georgiou & Pavon, *Stochastic Control Liaisons...*                                | 连接 Schrödinger Bridge、控制与 transport                        |

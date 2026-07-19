@@ -6,33 +6,33 @@
   "entries": [
     {
       "source": "rewrite/bridge/01_what_problem_schrodinger_bridge_solves.md",
-      "sourceSha256": "0a93ad2888b9f9c6a5c0a5dba17016599cfdaec26dc8ec5b12349375f1989226",
+      "sourceSha256": "5fe6aedbd3fe48a3a192f26aa90e2386708f1ed1bb7205b7baa0a96c52cb34f4",
       "output": "src/content/series/schrodinger-bridge/b1-schrodinger-bridge-overview.md",
-      "outputSha256": "521de6c8347a26dcdaae7a06f59242e6716c611bfaac93535235d2416fb482db"
+      "outputSha256": "688de0f76e49b762040ecc87c6d810c9e40ee05056c7dbe9e4707f0b43966770"
     },
     {
       "source": "rewrite/bridge/02_how_exact_bridge_is_formed.md",
-      "sourceSha256": "17721540672ab3320310b82c761426994286894e3e514e5ecd4fc526ce8b539a",
+      "sourceSha256": "f7a07f075bcd7ce0df21227b90bffe725cc69478f9ee94d8a1f98d665bdd63ce",
       "output": "src/content/series/schrodinger-bridge/b2-how-exact-bridge-is-formed.md",
-      "outputSha256": "d140cd8f6312772688b1193702d433363203bdcf967fc8209a937d34306f6a77"
+      "outputSha256": "f5372954698d833554a4e6ccc1075bfb357d637f7b14edc56adb500f2ee4da46"
     },
     {
       "source": "rewrite/bridge/03_how_exact_bridge_is_computed.md",
-      "sourceSha256": "370e37f2f1d19f835e98537674347dd232dca167f2222b1482f4f323fc4af9ed",
+      "sourceSha256": "b7105d256bebbcaee3aa2d309736eaaa48d966a1514bab47afc02239e383abdb",
       "output": "src/content/series/schrodinger-bridge/b3-how-exact-bridge-is-computed.md",
-      "outputSha256": "fffdec85809fa38f8f2a722af9a300ef07bcb6cf1af14b906bff28653f57ed7a"
+      "outputSha256": "aa66ce1cbbd9884dc62cc7759f3aecb66798afacd1d238107dc1dda0e889498b"
     },
     {
       "source": "rewrite/bridge/04_how_neural_bridge_approximates.md",
-      "sourceSha256": "6ccf3727e2e78cbe346f9ca15a6ea35d48f0f18030cda6165d6f36b2464ab1ea",
+      "sourceSha256": "8276ac9c0c7f36d34f3001477a28e131d55d080c6954cbf31fa4ac9914c857da",
       "output": "src/content/series/schrodinger-bridge/b4-how-neural-bridge-is-approximated.md",
-      "outputSha256": "09dfe4e4f2029df71c36e734e1e2d4f3889800fd2190b8f5b56648998910f77d"
+      "outputSha256": "0b0c13e76fc50c94d40aceeff8c89f00015a520f22e214d8d836314f763d6301"
     },
     {
       "source": "rewrite/bridge/05_when_bridge_is_needed.md",
-      "sourceSha256": "83da61cfeefa20819df89414e4565f47735570ac283092917e434d273c6f56d4",
+      "sourceSha256": "c7da6caa129a09af2e1a56d08f6aa761a1d6080d61c4806d5b6ec59b512da125",
       "output": "src/content/series/schrodinger-bridge/b5-when-schrodinger-bridge-is-needed.md",
-      "outputSha256": "09a0161f8641a0a2cecafec1d975d127f1043b4eb6757d0560c27aa402703067"
+      "outputSha256": "722d6a57d79be559a40d8651098a25d9999da318f189665671494c48a042cfa3"
     },
     {
       "source": "bridge/figures/B0_migration_likelihood.png",
