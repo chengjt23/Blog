@@ -18,11 +18,9 @@
     "diffusion/assets/d5_parameterization_geometry.png",
     "diffusion/assets/d7_guidance_vector_fields.png",
     "diffusion/assets/d8_unet_dit_interfaces.png",
-    "diffusion/assets/d6_sampler_design_matrix.png",
     "diffusion/assets/d9_local_field_vs_flow_map.png",
     "diffusion/assets/d9_conditional_flow_matching.png",
-    "diffusion/assets/d9_coupling_reflow.png",
-    "diffusion/assets/d9_flowmap_shortcut_meanflow.png"
+    "diffusion/assets/d9_coupling_reflow.png"
   ],
   "publicDerivations": [],
   "publicCode": []

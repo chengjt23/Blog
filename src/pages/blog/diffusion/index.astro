@@ -7,7 +7,7 @@ const chapters = await getChapters('diffusion');
 
 <BaseLayout
   title="Diffusion"
-  description="五章 Diffusion 长文：从前向加噪与 DDPM，到 Score、现代生成系统、Flow Matching 与少步生成。"
+  description="介绍 Diffusion 的基本结构、DDPM 训练、score dynamics、现代生成系统与 Flow 边界。"
   image="/images/diffusion/d1_forward_marginals.png"
 >
   <div class="page-shell">
@@ -15,17 +15,15 @@ const chapters = await getChapters('diffusion');
       <p class="eyebrow">Blog · 五章</p>
       <h1 class="page-title">Diffusion</h1>
       <p class="page-lead">
-        从“为什么先破坏数据”出发，依次建立 DDPM、Score 与连续动力学、现代系统设计， 最后进入 Flow
-        Matching 和一步生成。
+        从数据样本与简单噪声之间的生成问题出发，解释 DDPM、score dynamics、现代系统与少步生成。
       </p>
     </header>
 
     <section class="section-band" aria-labelledby="reading-route">
       <h2 class="section-heading" id="reading-route">阅读路线</h2>
       <p class="page-lead">
-        五章构成一条连续论证：前向加噪制造训练问题，DDPM 学习逆过程，Score
-        统一离散与连续动力学，现代系统组合训练与采样组件，Flow 与 finite map
-        则回答少步生成究竟需要学习什么。
+        D1 到 D5 分别介绍模型、训练目标、score 与连续动力学、实际系统，以及 Diffusion 与 Flow
+        的边界。
       </p>
     </section>
 

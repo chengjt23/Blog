@@ -43,8 +43,8 @@ test('Diffusion Blog publishes all chapters with math, images, and direct naviga
   await expect(page.locator('.chapter-row')).toHaveCount(5);
   await page.screenshot({ path: 'artifacts/qa/diffusion-index-desktop.png', fullPage: true });
 
-  await page.getByRole('link', { name: /去噪器究竟学到了什么/ }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('去噪器究竟学到了什么');
+  await page.getByRole('link', { name: /去噪网络真正学到的是什么/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('去噪网络真正学到的是什么');
   await expect(page.locator('.chapter-meta')).toContainText('正式版 v1.0');
   expect(await page.locator('.katex-display').count()).toBeGreaterThanOrEqual(5);
   const images = page.locator('.article-content img');

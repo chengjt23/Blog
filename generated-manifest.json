@@ -102,33 +102,33 @@
     },
     {
       "source": "rewrite/diffusion/01_why_noising_helps_generation.md",
-      "sourceSha256": "10265bff12e47c35af7236e48de875b3a976b903e42ac18ce4d7ff9e9de43bf9",
+      "sourceSha256": "d7578802615cc72f04161f0bf875c9dd5d9501f1c2d34a55035ae96290e0c889",
       "output": "src/content/series/diffusion/d1-forward-diffusion.md",
-      "outputSha256": "2cb526608ff8a590c0a749e614704a051136d0340aa838e4792abaee34e2791a"
+      "outputSha256": "1f583da92b09a474fc3136e4766b96224076a31441cf0f8c381341af012d57b2"
     },
     {
       "source": "rewrite/diffusion/02_how_ddpm_learns_reverse.md",
-      "sourceSha256": "317297a688771d7bce88daabc1d87fc1814447f47e2ba93fb3f1d9d48434c8aa",
+      "sourceSha256": "101ff763e982ffd2aefd2605d6af0ff38d8929cca2b0c01c2a8eff617e4a75ff",
       "output": "src/content/series/diffusion/d2-ddpm-objective.md",
-      "outputSha256": "6429108f3c1af4ee4b8a2c83a6b400da6b537a4e4422526d934baef01d7e8ffd"
+      "outputSha256": "c270108c1a9bfbb761197a7adb5b2e48b18fdafe983498557c2e01819a518f88"
     },
     {
       "source": "rewrite/diffusion/03_score_and_continuous_dynamics.md",
-      "sourceSha256": "f867077631e50d753400ba8afeacb9a4810dd5dc3b747075944534aaa0255cd7",
+      "sourceSha256": "2718c146eed61be0ec3a6555ecf5b3f38714918369f2bab9b1a31067c90705db",
       "output": "src/content/series/diffusion/d3-score-and-continuous-dynamics.md",
-      "outputSha256": "c19591004796399fc6e88834b68089e922712caceb63503f5c74d6ac7df9781e"
+      "outputSha256": "e6d93b440b82c9f967bea2478de2640892356678ac97cc1945999222b713c6f1"
     },
     {
       "source": "rewrite/diffusion/04_modern_diffusion_system.md",
-      "sourceSha256": "a1d1366496b69b68f0b8c62f7d8bbbe853ea4b1d99c229d588736eefa8251665",
+      "sourceSha256": "348ab19478bc329938ef98abfeb8d570aa6c4ccb44723229952e81a5a0c0055d",
       "output": "src/content/series/diffusion/d4-modern-diffusion-system.md",
-      "outputSha256": "456c3e2f6af189b017952996e3a8af7e83f0015f58632e4a8485b9ce8a318802"
+      "outputSha256": "07b0124917f2c519e26a4b6c17fca93b900547736d0f504297ef62adacad02eb"
     },
     {
       "source": "rewrite/diffusion/05_from_diffusion_to_flow_and_few_steps.md",
-      "sourceSha256": "932a9021a8621f07c6dc0b854b3ea3fdd4791f0b44e16e66d0a27043397f0d4c",
+      "sourceSha256": "b0476e3f033f2ab20441ab887baea8491fa61f3de83433ed24905892b190a706",
       "output": "src/content/series/diffusion/d5-flow-and-few-step-generation.md",
-      "outputSha256": "61a45732416cc4592122036cd7d2423ea34e06af14fa8326a93fd16838a6c167"
+      "outputSha256": "7b68434cfb01b67c14cfc9b351d91c5ad5c06f723aa997aca752135108838e09"
     },
     {
       "source": "diffusion/assets/d1_forward_marginals.png",
@@ -191,12 +191,6 @@
       "outputSha256": "bfa1bd1ddfbf537d75e83111ba9282e1c9b9d70ab87854388895757b9dba7af1"
     },
     {
-      "source": "diffusion/assets/d6_sampler_design_matrix.png",
-      "sourceSha256": "3aceb899957132340cb637cdf41b964734d452f6ff405dc8ef0bcd1d62563f1f",
-      "output": "public/images/diffusion/d6_sampler_design_matrix.png",
-      "outputSha256": "3aceb899957132340cb637cdf41b964734d452f6ff405dc8ef0bcd1d62563f1f"
-    },
-    {
       "source": "diffusion/assets/d9_local_field_vs_flow_map.png",
       "sourceSha256": "4c2c315253357a65885a7f2b2dc09285f1e3898eb01ea10fe9cce5c988e3807e",
       "output": "public/images/diffusion/d9_local_field_vs_flow_map.png",
@@ -213,12 +207,6 @@
       "sourceSha256": "fc6ea5c0803a1e126c3213829a9c69e6e3318449b736a57d9da4ff3cc6e3d3dd",
       "output": "public/images/diffusion/d9_coupling_reflow.png",
       "outputSha256": "fc6ea5c0803a1e126c3213829a9c69e6e3318449b736a57d9da4ff3cc6e3d3dd"
-    },
-    {
-      "source": "diffusion/assets/d9_flowmap_shortcut_meanflow.png",
-      "sourceSha256": "4767b5ad787fab52c5ad4ce4caad809118f724e4d03f83bb30514c426757757a",
-      "output": "public/images/diffusion/d9_flowmap_shortcut_meanflow.png",
-      "outputSha256": "4767b5ad787fab52c5ad4ce4caad809118f724e4d03f83bb30514c426757757a"
     }
   ]
 }

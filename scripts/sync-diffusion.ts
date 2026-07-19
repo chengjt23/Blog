@@ -81,9 +81,9 @@ const bridgeRoutes = await readJson<OtherRouteManifest>(path.join(siteRoot, 'rou
 if (routes.chapters.length !== 5 || allowlist.sources.length !== 5) {
   throw new Error('Diffusion publication requires exactly 5 declared chapters.');
 }
-if (allowlist.assets.length !== 15) {
+if (allowlist.assets.length !== 13) {
   throw new Error(
-    `Diffusion publication requires exactly 15 assets, received ${allowlist.assets.length}.`,
+    `Diffusion publication requires exactly 13 assets, received ${allowlist.assets.length}.`,
   );
 }
 
